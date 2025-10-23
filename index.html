@@ -380,39 +380,8 @@
 
     <div class="notification" id="notification"></div>
 
-    <script type="module">
-        // ========================================
-        // Firebase SDK のインポート
-        // ========================================
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-        import { getDatabase, ref, set, update, push } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
-
-        // ========================================
-        // Firebase設定
-        // ========================================
-        const firebaseConfig = {
-            apiKey: "AIzaSyBDbScn1FCiedXrE3BoORjw1KRPP6Rbw9s",
-            authDomain: "realtimebus-e46a1.firebaseapp.com",
-            databaseURL: "https://realtimebus-e46a1-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "realtimebus-e46a1",
-            storageBucket: "realtimebus-e46a1.firebasestorage.app",
-            messagingSenderId: "508497237681",
-            appId: "1:508497237681:web:a9d898ca4ac098f1133490",
-            measurementId: "G-1PV5B24RK1"
-        };
-
-        // Firebaseの初期化
-        let app;
-        let database;
-        try {
-            app = initializeApp(firebaseConfig);
-            database = getDatabase(app);
-            console.log('Firebase initialized');
-        } catch (error) {
-            console.error('Firebase initialization error:', error);
-            alert('Firebaseの初期化に失敗しました。設定を確認してください。');
-        }
-
+    <!-- 先にグローバル変数とinitMap関数を定義 -->
+    <script>
         // ========================================
         // グローバル変数
         // ========================================
@@ -427,11 +396,12 @@
         let updateCount = 0;
         let currentBusId = null;
         let selectedBusNumber = null;
+        let database = null;
 
         // ========================================
-        // 地図の初期化（グローバルスコープに公開）
+        // 地図の初期化（Google Mapsから呼ばれる）
         // ========================================
-        window.initMap = function() {
+        function initMap() {
             const defaultCenter = { lat: 35.6812, lng: 139.7671 };
             
             map = new google.maps.Map(document.getElementById('map'), {
@@ -462,7 +432,7 @@
             });
 
             getCurrentLocation();
-        };
+        }
 
         // ========================================
         // 現在地取得
@@ -492,6 +462,98 @@
                 }
             );
         }
+
+        // ========================================
+        // 通知表示
+        // ========================================
+        function showNotification(message, type = 'error') {
+            const notificationDiv = document.getElementById('notification');
+            notificationDiv.textContent = message;
+            notificationDiv.className = 'notification show';
+            
+            if (type === 'success') {
+                notificationDiv.classList.add('success');
+            }
+            
+            setTimeout(() => {
+                notificationDiv.classList.remove('show');
+                setTimeout(() => {
+                    notificationDiv.classList.remove('success');
+                }, 300);
+            }, 3000);
+        }
+
+        // ========================================
+        // エラーハンドリング
+        // ========================================
+        function handleError(error) {
+            let message = '位置情報の取得エラー';
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    message = '位置情報の使用が拒否されました';
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    message = '位置情報が利用できません';
+                    break;
+                case error.TIMEOUT:
+                    message = '位置情報の取得がタイムアウトしました';
+                    break;
+            }
+            showNotification(message, 'error');
+        }
+
+        // ========================================
+        // 経過時間の更新
+        // ========================================
+        function updateDuration() {
+            if (!startTime) return;
+            
+            const elapsed = Date.now() - startTime;
+            const hours = Math.floor(elapsed / 3600000);
+            const minutes = Math.floor((elapsed % 3600000) / 60000);
+            const seconds = Math.floor((elapsed % 60000) / 1000);
+
+            const timeString = 
+                String(hours).padStart(2, '0') + ':' +
+                String(minutes).padStart(2, '0') + ':' +
+                String(seconds).padStart(2, '0');
+
+            document.getElementById('duration').textContent = timeString;
+        }
+    </script>
+
+    <!-- Firebase SDKとメインロジック -->
+    <script type="module">
+        // ========================================
+        // Firebase SDK のインポート
+        // ========================================
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+        import { getDatabase, ref, set, update, push } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+
+        // ========================================
+        // Firebase設定
+        // ========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyBDbScn1FCiedXrE3BoORjw1KRPP6Rbw9s",
+            authDomain: "realtimebus-e46a1.firebaseapp.com",
+            databaseURL: "https://realtimebus-e46a1-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "realtimebus-e46a1",
+            storageBucket: "realtimebus-e46a1.firebasestorage.app",
+            messagingSenderId: "508497237681",
+            appId: "1:508497237681:web:a9d898ca4ac098f1133490",
+            measurementId: "G-1PV5B24RK1"
+        };
+
+        // Firebaseの初期化
+        let app;
+        try {
+            app = initializeApp(firebaseConfig);
+            window.database = getDatabase(app);
+            console.log('Firebase initialized');
+        } catch (error) {
+            console.error('Firebase initialization error:', error);
+            alert('Firebaseの初期化に失敗しました。設定を確認してください。');
+        };
 
         // ========================================
         // 号車選択モーダル
@@ -554,11 +616,14 @@
         // ========================================
         // 追跡開始
         // ========================================
-        function startTracking(busNumber) {
+        async function startTracking(busNumber) {
             if (!navigator.geolocation) {
                 showNotification('位置情報が利用できません', 'error');
                 return;
             }
+
+            // Firebase SDKのインポート（動的）
+            const { ref, update } = await import("https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js");
 
             isTracking = true;
             startTime = Date.now();
@@ -576,8 +641,8 @@
             document.getElementById('busBadge').innerHTML = `<span class="bus-badge">${busNumber}号車</span>`;
 
             // Firebaseに運行開始を記録
-            if (database) {
-                const busRef = ref(database, `buses/${currentBusId}`);
+            if (window.database) {
+                const busRef = ref(window.database, `buses/${currentBusId}`);
                 update(busRef, {
                     busNumber: busNumber,
                     isActive: true,
@@ -605,7 +670,10 @@
         // ========================================
         // 追跡停止
         // ========================================
-        function stopTracking() {
+        async function stopTracking() {
+            // Firebase SDKのインポート（動的）
+            const { ref, update } = await import("https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js");
+
             isTracking = false;
 
             if (watchId !== null) {
@@ -619,8 +687,8 @@
             }
 
             // Firebaseに運行終了を記録
-            if (database && currentBusId) {
-                const busRef = ref(database, `buses/${currentBusId}`);
+            if (window.database && currentBusId) {
+                const busRef = ref(window.database, `buses/${currentBusId}`);
                 update(busRef, {
                     isActive: false,
                     endTime: Date.now()
@@ -643,7 +711,10 @@
         // ========================================
         // 位置情報の更新
         // ========================================
-        function updatePosition(position) {
+        async function updatePosition(position) {
+            // Firebase SDKのインポート（動的）
+            const { ref, set, push } = await import("https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js");
+
             const pos = {
                 lat: position.coords.latitude,
                 lng: position.coords.longitude,
@@ -663,8 +734,8 @@
             document.getElementById('accuracy').textContent = Math.round(position.coords.accuracy) + 'm';
 
             // Firebaseに位置情報を送信
-            if (database && currentBusId) {
-                const locationRef = ref(database, `buses/${currentBusId}/location`);
+            if (window.database && currentBusId) {
+                const locationRef = ref(window.database, `buses/${currentBusId}/location`);
                 set(locationRef, {
                     latitude: pos.lat,
                     longitude: pos.lng,
@@ -675,7 +746,7 @@
                 });
 
                 // パスも保存
-                const pathRef = ref(database, `buses/${currentBusId}/path`);
+                const pathRef = ref(window.database, `buses/${currentBusId}/path`);
                 push(pathRef, {
                     lat: pos.lat,
                     lng: pos.lng,
@@ -684,64 +755,6 @@
             }
 
             console.log('位置更新:', pos);
-        }
-
-        // ========================================
-        // エラーハンドリング
-        // ========================================
-        function handleError(error) {
-            let message = '位置情報の取得エラー';
-            switch(error.code) {
-                case error.PERMISSION_DENIED:
-                    message = '位置情報の使用が拒否されました';
-                    break;
-                case error.POSITION_UNAVAILABLE:
-                    message = '位置情報が利用できません';
-                    break;
-                case error.TIMEOUT:
-                    message = '位置情報の取得がタイムアウトしました';
-                    break;
-            }
-            showNotification(message, 'error');
-        }
-
-        // ========================================
-        // 経過時間の更新
-        // ========================================
-        function updateDuration() {
-            if (!startTime) return;
-            
-            const elapsed = Date.now() - startTime;
-            const hours = Math.floor(elapsed / 3600000);
-            const minutes = Math.floor((elapsed % 3600000) / 60000);
-            const seconds = Math.floor((elapsed % 60000) / 1000);
-
-            const timeString = 
-                String(hours).padStart(2, '0') + ':' +
-                String(minutes).padStart(2, '0') + ':' +
-                String(seconds).padStart(2, '0');
-
-            document.getElementById('duration').textContent = timeString;
-        }
-
-        // ========================================
-        // 通知表示
-        // ========================================
-        function showNotification(message, type = 'error') {
-            const notificationDiv = document.getElementById('notification');
-            notificationDiv.textContent = message;
-            notificationDiv.className = 'notification show';
-            
-            if (type === 'success') {
-                notificationDiv.classList.add('success');
-            }
-            
-            setTimeout(() => {
-                notificationDiv.classList.remove('show');
-                setTimeout(() => {
-                    notificationDiv.classList.remove('success');
-                }, 300);
-            }, 3000);
         }
 
         // PWAのインストールプロンプト
