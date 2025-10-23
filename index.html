@@ -150,12 +150,48 @@
         .info-panel {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(20px);
-            padding: 12px 18px;
+            padding: 10px 15px;
             border-radius: 18px;
             box-shadow: 0 8px 30px rgba(255, 107, 157, 0.15);
             min-width: 200px;
             font-size: 13px;
             border: 1px solid rgba(255, 155, 183, 0.2);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .info-panel.collapsed {
+            padding: 8px 15px;
+        }
+
+        .info-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 5px;
+        }
+
+        .info-panel-toggle {
+            font-size: 14px;
+            color: #ff6b9d;
+            transition: transform 0.3s;
+            user-select: none;
+        }
+
+        .info-panel.collapsed .info-panel-toggle {
+            transform: rotate(180deg);
+        }
+
+        .info-panel-details {
+            max-height: 200px;
+            overflow: hidden;
+            transition: max-height 0.3s, opacity 0.3s;
+            opacity: 1;
+        }
+
+        .info-panel.collapsed .info-panel-details {
+            max-height: 0;
+            opacity: 0;
         }
 
         .info-item {
@@ -413,18 +449,23 @@
                 <div>運行開始</div>
             </button>
             
-            <div class="info-panel">
-                <div class="info-item">
-                    <span class="info-label">運行時間</span>
-                    <span class="info-value" id="duration">00:00:00</span>
+            <div class="info-panel collapsed" id="infoPanel">
+                <div class="info-panel-header">
+                    <div class="info-item" style="border: none; padding: 0;">
+                        <span class="info-label">運行時間</span>
+                        <span class="info-value" id="duration">00:00:00</span>
+                    </div>
+                    <span class="info-panel-toggle">▼</span>
                 </div>
-                <div class="info-item">
-                    <span class="info-label">更新回数</span>
-                    <span class="info-value" id="updateCount">0回</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">精度</span>
-                    <span class="info-value" id="accuracy">-</span>
+                <div class="info-panel-details">
+                    <div class="info-item">
+                        <span class="info-label">更新回数</span>
+                        <span class="info-value" id="updateCount">0回</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">精度</span>
+                        <span class="info-value" id="accuracy">-</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -503,12 +544,18 @@
                 map: map,
                 icon: {
                     path: google.maps.SymbolPath.CIRCLE,
-                    scale: 10,
+                    scale: 15,
                     fillColor: '#ff6b9d',
                     fillOpacity: 1,
                     strokeColor: 'white',
                     strokeWeight: 3,
                 },
+                label: {
+                    text: '',
+                    color: 'white',
+                    fontSize: '14px',
+                    fontWeight: 'bold'
+                }
             });
 
             polyline = new google.maps.Polyline({
@@ -727,6 +774,14 @@
             document.getElementById('statusText').textContent = '運行中';
             document.getElementById('busBadge').innerHTML = `<span class="bus-badge">${busNumber}号車</span>`;
 
+            // マーカーに号車番号を表示
+            marker.setLabel({
+                text: busNumber.toString(),
+                color: 'white',
+                fontSize: '14px',
+                fontWeight: 'bold'
+            });
+
             // Firebaseに運行開始を記録
             if (window.database) {
                 const busRef = ref(window.database, `buses/${currentBusId}`);
@@ -791,6 +846,9 @@
             document.getElementById('statusText').textContent = '待機中';
             document.getElementById('busBadge').innerHTML = '';
 
+            // マーカーのラベルをクリア
+            marker.setLabel(null);
+
             showNotification('運行を終了しました', 'success');
             currentBusId = null;
         }
@@ -843,6 +901,13 @@
 
             console.log('位置更新:', pos);
         }
+
+        // ========================================
+        // 情報パネルのトグル機能
+        // ========================================
+        document.getElementById('infoPanel').addEventListener('click', function() {
+            this.classList.toggle('collapsed');
+        });
 
         // PWAのインストールプロンプト
         let deferredPrompt;
