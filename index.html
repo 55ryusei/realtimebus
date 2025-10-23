@@ -13,29 +13,67 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #f5f5f5;
+            font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Segoe UI', sans-serif;
+            background: #fff5f8;
             height: 100vh;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
         }
 
         .header {
-            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            background: linear-gradient(135deg, #ff9bb7 0%, #ff6b9d 100%);
             color: white;
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 8px 15px;
+            box-shadow: 0 2px 8px rgba(255, 107, 157, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .logo {
+            width: 36px;
+            height: 36px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+        }
+
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        .header-text {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
         }
 
         .header h1 {
-            font-size: 24px;
-            margin-bottom: 5px;
+            font-size: 15px;
+            margin: 0;
+            font-weight: 600;
+            line-height: 1.2;
         }
 
         .header .status {
-            font-size: 14px;
+            font-size: 11px;
             opacity: 0.9;
+            margin-top: 1px;
         }
 
         .map-container {
@@ -57,29 +95,29 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 15px;
+            gap: 10px;
         }
 
         .start-button {
-            width: 200px;
-            height: 200px;
+            width: 100px;
+            height: 100px;
             border-radius: 50%;
             border: none;
-            font-size: 24px;
-            font-weight: bold;
+            font-size: 14px;
+            font-weight: 600;
             color: white;
             cursor: pointer;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 15px rgba(255, 107, 157, 0.4);
             transition: all 0.3s;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 4px;
         }
 
         .start-button.stopped {
-            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            background: linear-gradient(135deg, #ff9bb7 0%, #ff6b9d 100%);
         }
 
         .start-button.running {
@@ -91,22 +129,40 @@
         }
 
         .start-button .icon {
-            font-size: 48px;
+            font-size: 28px;
+        }
+            background: linear-gradient(135deg, #ff9bb7 0%, #ff6b9d 100%);
+        }
+
+        .start-button.running {
+            background: linear-gradient(135deg, #ff6b9d 0%, #f44336 100%);
+        }
+
+        .start-button:active {
+            transform: scale(0.95);
+            box-shadow: 0 4px 20px rgba(255, 107, 157, 0.5);
+        }
+
+        .start-button .icon {
+            font-size: 32px;
         }
 
         .info-panel {
-            background: white;
-            padding: 15px 25px;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            min-width: 250px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 12px 18px;
+            border-radius: 18px;
+            box-shadow: 0 8px 30px rgba(255, 107, 157, 0.15);
+            min-width: 200px;
+            font-size: 13px;
+            border: 1px solid rgba(255, 155, 183, 0.2);
         }
 
         .info-item {
             display: flex;
             justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid #eee;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(255, 155, 183, 0.15);
         }
 
         .info-item:last-child {
@@ -114,14 +170,15 @@
         }
 
         .info-label {
-            color: #666;
-            font-size: 14px;
+            color: #888;
+            font-size: 12px;
+            font-weight: 500;
         }
 
         .info-value {
-            font-weight: bold;
-            font-size: 14px;
-            color: #333;
+            font-weight: 600;
+            font-size: 12px;
+            color: #ff6b9d;
         }
 
         /* 号車選択モーダル */
@@ -131,11 +188,12 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0, 0, 0, 0.4);
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 3000;
+            backdrop-filter: blur(10px);
         }
 
         .modal.hidden {
@@ -144,16 +202,16 @@
 
         .modal-content {
             background: white;
-            border-radius: 20px;
+            border-radius: 28px;
             padding: 30px;
             max-width: 400px;
             width: 90%;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            box-shadow: 0 20px 60px rgba(255, 107, 157, 0.3);
         }
 
         .modal-title {
             font-size: 24px;
-            font-weight: bold;
+            font-weight: 600;
             text-align: center;
             margin-bottom: 20px;
             color: #333;
@@ -162,43 +220,56 @@
         .bus-selection {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
+            gap: 12px;
             margin-bottom: 20px;
         }
 
         .bus-button {
             padding: 20px;
-            border: 2px solid #ddd;
-            border-radius: 15px;
+            border: 2px solid rgba(255, 155, 183, 0.3);
+            border-radius: 18px;
             background: white;
             font-size: 18px;
-            font-weight: bold;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 10px;
+            color: #333;
         }
 
         .bus-button:hover {
-            border-color: #4CAF50;
-            background: #f1f8f4;
+            border-color: #ff9bb7;
+            background: #fef5f8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 155, 183, 0.2);
         }
 
         .bus-button.selected {
-            border-color: #4CAF50;
-            background: #4CAF50;
+            border-color: #ff6b9d;
+            background: linear-gradient(135deg, #ff9bb7 0%, #ff6b9d 100%);
             color: white;
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(255, 107, 157, 0.3);
         }
 
         .custom-bus-input {
             width: 100%;
             padding: 15px;
-            border: 2px solid #ddd;
-            border-radius: 10px;
+            border: 2px solid rgba(255, 155, 183, 0.3);
+            border-radius: 14px;
             font-size: 16px;
             margin-bottom: 20px;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .custom-bus-input:focus {
+            outline: none;
+            border-color: #ff6b9d;
+            box-shadow: 0 0 0 4px rgba(255, 107, 157, 0.1);
         }
 
         .modal-buttons {
@@ -210,25 +281,31 @@
             flex: 1;
             padding: 15px;
             border: none;
-            border-radius: 10px;
+            border-radius: 14px;
             font-size: 16px;
-            font-weight: bold;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .modal-button.cancel {
-            background: #ddd;
+            background: #f0f0f0;
             color: #666;
         }
 
-        .modal-button.confirm {
-            background: #4CAF50;
-            color: white;
+        .modal-button.cancel:active {
+            background: #e0e0e0;
         }
 
-        .modal-button:active {
-            transform: scale(0.95);
+        .modal-button.confirm {
+            background: linear-gradient(135deg, #ff9bb7 0%, #ff6b9d 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(255, 107, 157, 0.3);
+        }
+
+        .modal-button.confirm:active {
+            transform: scale(0.98);
+            box-shadow: 0 2px 8px rgba(255, 107, 157, 0.3);
         }
 
         .loading {
@@ -238,8 +315,8 @@
             transform: translate(-50%, -50%);
             background: white;
             padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(255, 107, 157, 0.2);
             z-index: 2000;
             text-align: center;
         }
@@ -249,12 +326,12 @@
         }
 
         .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #4CAF50;
+            border: 4px solid #fef5f8;
+            border-top: 4px solid #ff6b9d;
             border-radius: 50%;
             width: 40px;
             height: 40px;
-            animation: spin 1s linear infinite;
+            animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
             margin: 0 auto 15px;
         }
 
@@ -265,26 +342,29 @@
 
         .notification {
             position: fixed;
-            top: 80px;
+            top: 60px;
             left: 50%;
             transform: translateX(-50%);
             background: #f44336;
             color: white;
-            padding: 15px 25px;
+            padding: 12px 20px;
             border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             z-index: 2000;
             display: none;
             max-width: 90%;
+            font-size: 13px;
+            font-weight: 500;
         }
 
         .notification.show {
             display: block;
-            animation: slideDown 0.3s;
+            animation: slideDown 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .notification.success {
-            background: #4CAF50;
+            background: linear-gradient(135deg, #ff9bb7 0%, #ff6b9d 100%);
+            box-shadow: 0 8px 30px rgba(255, 107, 157, 0.3);
         }
 
         @keyframes slideDown {
@@ -299,21 +379,28 @@
         }
 
         .bus-badge {
-            background: #2196F3;
+            background: linear-gradient(135deg, #ff9bb7 0%, #ff6b9d 100%);
             color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: bold;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
             display: inline-block;
-            margin-top: 5px;
+            box-shadow: 0 2px 8px rgba(255, 107, 157, 0.3);
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>🚌 幼稚園バス管理</h1>
-        <div class="status" id="statusText">待機中</div>
+        <div class="header-content">
+            <div class="logo">
+                <img src="logo.png" alt="ロゴ" onerror="this.parentElement.innerHTML='🚐'">
+            </div>
+            <div class="header-text">
+                <h1>幼稚園バス管理</h1>
+                <div class="status" id="statusText">待機中</div>
+            </div>
+        </div>
         <div id="busBadge"></div>
     </div>
 
@@ -417,7 +504,7 @@
                 icon: {
                     path: google.maps.SymbolPath.CIRCLE,
                     scale: 10,
-                    fillColor: '#4CAF50',
+                    fillColor: '#ff6b9d',
                     fillOpacity: 1,
                     strokeColor: 'white',
                     strokeWeight: 3,
@@ -426,7 +513,7 @@
 
             polyline = new google.maps.Polyline({
                 map: map,
-                strokeColor: '#2196F3',
+                strokeColor: '#ff6b9d',
                 strokeOpacity: 0.8,
                 strokeWeight: 4,
             });
