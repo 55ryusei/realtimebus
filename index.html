@@ -125,6 +125,113 @@
             color: #333;
         }
 
+        /* 号車選択モーダル */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+        }
+
+        .modal.hidden {
+            display: none;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .bus-selection {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .bus-button {
+            padding: 20px;
+            border: 2px solid #ddd;
+            border-radius: 15px;
+            background: white;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .bus-button:hover {
+            border-color: #4CAF50;
+            background: #f1f8f4;
+        }
+
+        .bus-button.selected {
+            border-color: #4CAF50;
+            background: #4CAF50;
+            color: white;
+        }
+
+        .custom-bus-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal-button {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .modal-button.cancel {
+            background: #ddd;
+            color: #666;
+        }
+
+        .modal-button.confirm {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .modal-button:active {
+            transform: scale(0.95);
+        }
+
         .loading {
             position: fixed;
             top: 50%;
@@ -157,7 +264,7 @@
             100% { transform: rotate(360deg); }
         }
 
-        .error {
+        .notification {
             position: fixed;
             top: 80px;
             left: 50%;
@@ -169,11 +276,16 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
             z-index: 2000;
             display: none;
+            max-width: 90%;
         }
 
-        .error.show {
+        .notification.show {
             display: block;
             animation: slideDown 0.3s;
+        }
+
+        .notification.success {
+            background: #4CAF50;
         }
 
         @keyframes slideDown {
@@ -186,12 +298,24 @@
                 opacity: 1;
             }
         }
+
+        .bus-badge {
+            background: #2196F3;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            display: inline-block;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>🚌 幼稚園バス管理</h1>
         <div class="status" id="statusText">待機中</div>
+        <div id="busBadge"></div>
     </div>
 
     <div class="map-container">
@@ -199,7 +323,7 @@
         
         <div class="controls">
             <button id="startButton" class="start-button stopped">
-                <div class="icon"▶️</div>
+                <div class="icon">▶️</div>
                 <div>運行開始</div>
             </button>
             
@@ -220,14 +344,79 @@
         </div>
     </div>
 
+    <!-- 号車選択モーダル -->
+    <div class="modal hidden" id="busSelectionModal">
+        <div class="modal-content">
+            <div class="modal-title">🚌 号車を選択</div>
+            <div class="bus-selection">
+                <button class="bus-button" data-bus="1">
+                    <span style="font-size: 30px;">🚌</span>
+                    <span>1号車</span>
+                </button>
+                <button class="bus-button" data-bus="2">
+                    <span style="font-size: 30px;">🚌</span>
+                    <span>2号車</span>
+                </button>
+                <button class="bus-button" data-bus="3">
+                    <span style="font-size: 30px;">🚌</span>
+                    <span>3号車</span>
+                </button>
+                <button class="bus-button" data-bus="4">
+                    <span style="font-size: 30px;">🚌</span>
+                    <span>4号車</span>
+                </button>
+            </div>
+            <input type="text" class="custom-bus-input" id="customBusInput" placeholder="その他の号車名を入力 (例: 5号車)">
+            <div class="modal-buttons">
+                <button class="modal-button cancel" id="cancelButton">キャンセル</button>
+                <button class="modal-button confirm" id="confirmButton">決定</button>
+            </div>
+        </div>
+    </div>
+
     <div class="loading" id="loading">
         <div class="spinner"></div>
         <div>位置情報を取得中...</div>
     </div>
 
-    <div class="error" id="error"></div>
+    <div class="notification" id="notification"></div>
 
-    <script>
+    <script type="module">
+        // ========================================
+        // Firebase SDK のインポート
+        // ========================================
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+        import { getDatabase, ref, set, update, push } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+
+        // ========================================
+        // Firebase設定
+        // ========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyBDbScn1FCiedXrE3BoORjw1KRPP6Rbw9s",
+            authDomain: "realtimebus-e46a1.firebaseapp.com",
+            databaseURL: "https://realtimebus-e46a1-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "realtimebus-e46a1",
+            storageBucket: "realtimebus-e46a1.firebasestorage.app",
+            messagingSenderId: "508497237681",
+            appId: "1:508497237681:web:a9d898ca4ac098f1133490",
+            measurementId: "G-1PV5B24RK1"
+        };
+
+        // Firebaseの初期化
+        let app;
+        let database;
+        try {
+            app = initializeApp(firebaseConfig);
+            database = getDatabase(app);
+            console.log('Firebase initialized');
+        } catch (error) {
+            console.error('Firebase initialization error:', error);
+            alert('Firebaseの初期化に失敗しました。設定を確認してください。');
+        }
+
+        // ========================================
+        // グローバル変数
+        // ========================================
         let map;
         let marker;
         let polyline;
@@ -237,10 +426,13 @@
         let startTime = null;
         let durationInterval = null;
         let updateCount = 0;
+        let currentBusId = null;
+        let selectedBusNumber = null;
 
-        // 初期化
+        // ========================================
+        // 地図の初期化
+        // ========================================
         function initMap() {
-            // デフォルト位置(東京)
             const defaultCenter = { lat: 35.6812, lng: 139.7671 };
             
             map = new google.maps.Map(document.getElementById('map'), {
@@ -251,7 +443,6 @@
                 fullscreenControl: false,
             });
 
-            // マーカー(バスアイコン)
             marker = new google.maps.Marker({
                 map: map,
                 icon: {
@@ -264,7 +455,6 @@
                 },
             });
 
-            // 移動軌跡用のポリライン
             polyline = new google.maps.Polyline({
                 map: map,
                 strokeColor: '#2196F3',
@@ -272,14 +462,15 @@
                 strokeWeight: 4,
             });
 
-            // 現在地取得を試行
             getCurrentLocation();
         }
 
-        // 現在地を取得
+        // ========================================
+        // 現在地取得
+        // ========================================
         function getCurrentLocation() {
             if (!navigator.geolocation) {
-                showError('このブラウザは位置情報に対応していません');
+                showNotification('このブラウザは位置情報に対応していません', 'error');
                 return;
             }
 
@@ -297,25 +488,76 @@
                 },
                 (error) => {
                     document.getElementById('loading').classList.add('hidden');
-                    showError('位置情報の取得に失敗しました');
+                    showNotification('位置情報の取得に失敗しました', 'error');
                     console.error(error);
                 }
             );
         }
 
-        // 運行開始/停止
+        // ========================================
+        // 号車選択モーダル
+        // ========================================
+        const busButtons = document.querySelectorAll('.bus-button');
+        const customBusInput = document.getElementById('customBusInput');
+
+        busButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                busButtons.forEach(btn => btn.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedBusNumber = this.dataset.bus;
+                customBusInput.value = '';
+            });
+        });
+
+        customBusInput.addEventListener('input', function() {
+            if (this.value) {
+                busButtons.forEach(btn => btn.classList.remove('selected'));
+                selectedBusNumber = this.value;
+            }
+        });
+
+        // ========================================
+        // 運行開始/停止ボタン
+        // ========================================
         document.getElementById('startButton').addEventListener('click', function() {
             if (!isTracking) {
-                startTracking();
+                showBusSelectionModal();
             } else {
                 stopTracking();
             }
         });
 
+        // ========================================
+        // 号車選択モーダル表示
+        // ========================================
+        function showBusSelectionModal() {
+            document.getElementById('busSelectionModal').classList.remove('hidden');
+            selectedBusNumber = null;
+            busButtons.forEach(btn => btn.classList.remove('selected'));
+            customBusInput.value = '';
+        }
+
+        // キャンセルボタン
+        document.getElementById('cancelButton').addEventListener('click', function() {
+            document.getElementById('busSelectionModal').classList.add('hidden');
+        });
+
+        // 決定ボタン
+        document.getElementById('confirmButton').addEventListener('click', function() {
+            if (!selectedBusNumber) {
+                showNotification('号車を選択してください', 'error');
+                return;
+            }
+            document.getElementById('busSelectionModal').classList.add('hidden');
+            startTracking(selectedBusNumber);
+        });
+
+        // ========================================
         // 追跡開始
-        function startTracking() {
+        // ========================================
+        function startTracking(busNumber) {
             if (!navigator.geolocation) {
-                showError('位置情報が利用できません');
+                showNotification('位置情報が利用できません', 'error');
                 return;
             }
 
@@ -323,6 +565,7 @@
             startTime = Date.now();
             updateCount = 0;
             path = [];
+            currentBusId = 'bus' + busNumber;
 
             // ボタンの表示を変更
             const button = document.getElementById('startButton');
@@ -331,6 +574,18 @@
             button.innerHTML = '<div class="icon">⏹️</div><div>運行終了</div>';
 
             document.getElementById('statusText').textContent = '運行中';
+            document.getElementById('busBadge').innerHTML = `<span class="bus-badge">${busNumber}号車</span>`;
+
+            // Firebaseに運行開始を記録
+            if (database) {
+                const busRef = ref(database, `buses/${currentBusId}`);
+                update(busRef, {
+                    busNumber: busNumber,
+                    isActive: true,
+                    startTime: startTime,
+                    lastUpdate: Date.now()
+                });
+            }
 
             // 位置情報の監視開始
             watchId = navigator.geolocation.watchPosition(
@@ -343,13 +598,14 @@
                 }
             );
 
-            // 経過時間の更新開始
             durationInterval = setInterval(updateDuration, 1000);
 
-            showSuccess('運行を開始しました');
+            showNotification(`${busNumber}号車の運行を開始しました`, 'success');
         }
 
+        // ========================================
         // 追跡停止
+        // ========================================
         function stopTracking() {
             isTracking = false;
 
@@ -363,6 +619,15 @@
                 durationInterval = null;
             }
 
+            // Firebaseに運行終了を記録
+            if (database && currentBusId) {
+                const busRef = ref(database, `buses/${currentBusId}`);
+                update(busRef, {
+                    isActive: false,
+                    endTime: Date.now()
+                });
+            }
+
             // ボタンの表示を変更
             const button = document.getElementById('startButton');
             button.classList.remove('running');
@@ -370,11 +635,15 @@
             button.innerHTML = '<div class="icon">▶️</div><div>運行開始</div>';
 
             document.getElementById('statusText').textContent = '待機中';
+            document.getElementById('busBadge').innerHTML = '';
 
-            showSuccess('運行を終了しました');
+            showNotification('運行を終了しました', 'success');
+            currentBusId = null;
         }
 
+        // ========================================
         // 位置情報の更新
+        // ========================================
         function updatePosition(position) {
             const pos = {
                 lat: position.coords.latitude,
@@ -394,11 +663,33 @@
             document.getElementById('updateCount').textContent = updateCount + '回';
             document.getElementById('accuracy').textContent = Math.round(position.coords.accuracy) + 'm';
 
-            // ここで位置情報をFirebaseに送信する処理を追加できます
+            // Firebaseに位置情報を送信
+            if (database && currentBusId) {
+                const locationRef = ref(database, `buses/${currentBusId}/location`);
+                set(locationRef, {
+                    latitude: pos.lat,
+                    longitude: pos.lng,
+                    accuracy: position.coords.accuracy,
+                    timestamp: Date.now(),
+                    heading: position.coords.heading || null,
+                    speed: position.coords.speed || null
+                });
+
+                // パスも保存
+                const pathRef = ref(database, `buses/${currentBusId}/path`);
+                push(pathRef, {
+                    lat: pos.lat,
+                    lng: pos.lng,
+                    timestamp: Date.now()
+                });
+            }
+
             console.log('位置更新:', pos);
         }
 
+        // ========================================
         // エラーハンドリング
+        // ========================================
         function handleError(error) {
             let message = '位置情報の取得エラー';
             switch(error.code) {
@@ -412,10 +703,12 @@
                     message = '位置情報の取得がタイムアウトしました';
                     break;
             }
-            showError(message);
+            showNotification(message, 'error');
         }
 
+        // ========================================
         // 経過時間の更新
+        // ========================================
         function updateDuration() {
             if (!startTime) return;
             
@@ -432,26 +725,24 @@
             document.getElementById('duration').textContent = timeString;
         }
 
-        // エラー表示
-        function showError(message) {
-            const errorDiv = document.getElementById('error');
-            errorDiv.textContent = message;
-            errorDiv.classList.add('show');
+        // ========================================
+        // 通知表示
+        // ========================================
+        function showNotification(message, type = 'error') {
+            const notificationDiv = document.getElementById('notification');
+            notificationDiv.textContent = message;
+            notificationDiv.className = 'notification show';
+            
+            if (type === 'success') {
+                notificationDiv.classList.add('success');
+            }
+            
             setTimeout(() => {
-                errorDiv.classList.remove('show');
+                notificationDiv.classList.remove('show');
+                setTimeout(() => {
+                    notificationDiv.classList.remove('success');
+                }, 300);
             }, 3000);
-        }
-
-        // 成功メッセージ表示
-        function showSuccess(message) {
-            const errorDiv = document.getElementById('error');
-            errorDiv.style.background = '#4CAF50';
-            errorDiv.textContent = message;
-            errorDiv.classList.add('show');
-            setTimeout(() => {
-                errorDiv.classList.remove('show');
-                errorDiv.style.background = '#f44336';
-            }, 2000);
         }
 
         // PWAのインストールプロンプト
@@ -463,7 +754,6 @@
     </script>
 
     <!-- Google Maps APIの読み込み -->
-    <!-- 注意: YOUR_API_KEY を実際のAPIキーに置き換えてください -->
     <script async defer
         src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBKHPhToo8HfzoQ4QYgCZ5HQtlyu_u7r70&callback=initMap&language=ja">
     </script>
