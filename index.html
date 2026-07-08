@@ -438,7 +438,7 @@
             </div>
             <div class="header-text">
                 <h1>幼稚園バス管理</h1>
-                <div class="status" id="statusText">待機中</div>
+                <div class="status" id="statusText">認証中...</div>
             </div>
         </div>
         <div id="busBadge"></div>
@@ -498,6 +498,7 @@
                 </button>
             </div>
             <input type="text" class="custom-bus-input" id="customBusInput" placeholder="その他の号車名を入力 (例: 5号車)">
+            <input type="password" class="custom-bus-input" id="pinInput" placeholder="運行開始の暗証番号" inputmode="numeric" autocomplete="off">
             <div class="modal-buttons">
                 <button class="modal-button cancel" id="cancelButton">キャンセル</button>
                 <button class="modal-button confirm" id="confirmButton">決定</button>
@@ -527,8 +528,13 @@
         let durationInterval = null;
         let updateCount = 0;
         let currentBusId = null;
+        let currentSessionId = null;
         let selectedBusNumber = null;
         let database = null;
+        let lastWrittenPos = null;
+        let lastWriteTime = 0;
+        let writeFailureNotified = false;
+        let wakeLock = null;
 
         // ========================================
         // 地図の初期化（Google Mapsから呼ばれる）
@@ -666,7 +672,8 @@
         // Firebase SDK のインポート
         // ========================================
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-        import { getDatabase, ref, set, update, push } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+        import { getDatabase, ref, set, update, push, runTransaction, onDisconnect } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
 
         // ========================================
         // Firebase設定
@@ -682,12 +689,26 @@
             measurementId: "G-1PV5B24RK1"
         };
 
+        // 運行開始の暗証番号。園で決めた番号に変更してください
+        const OPERATOR_PIN = '0000';
+
         // Firebaseの初期化
         let app;
+        let authReady = false;
         try {
             app = initializeApp(firebaseConfig);
             window.database = getDatabase(app);
             console.log('Firebase initialized');
+
+            const auth = getAuth(app);
+            onAuthStateChanged(auth, (user) => {
+                authReady = !!user;
+                document.getElementById('statusText').textContent = authReady ? '待機中' : '認証中...';
+            });
+            signInAnonymously(auth).catch((error) => {
+                console.error('Firebase auth error:', error);
+                showNotification('認証に失敗しました。通信環境を確認してください', 'error');
+            });
         } catch (error) {
             console.error('Firebase initialization error:', error);
             alert('Firebaseの初期化に失敗しました。設定を確認してください。');
@@ -709,9 +730,15 @@
         });
 
         customBusInput.addEventListener('input', function() {
+            // 記号を除去し長さを制限（他号車のなりすまし/表示崩れ対策）
+            const sanitized = this.value.replace(/[<>&"'`]/g, '').slice(0, 10);
+            if (sanitized !== this.value) this.value = sanitized;
+
             if (this.value) {
                 busButtons.forEach(btn => btn.classList.remove('selected'));
                 selectedBusNumber = this.value;
+            } else {
+                selectedBusNumber = null;
             }
         });
 
@@ -720,6 +747,10 @@
         // ========================================
         document.getElementById('startButton').addEventListener('click', function() {
             if (!isTracking) {
+                if (!authReady) {
+                    showNotification('認証準備中です。数秒待ってからもう一度お試しください', 'error');
+                    return;
+                }
                 showBusSelectionModal();
             } else {
                 stopTracking();
@@ -734,6 +765,7 @@
             selectedBusNumber = null;
             busButtons.forEach(btn => btn.classList.remove('selected'));
             customBusInput.value = '';
+            document.getElementById('pinInput').value = '';
         }
 
         // キャンセルボタン
@@ -747,6 +779,12 @@
                 showNotification('号車を選択してください', 'error');
                 return;
             }
+            const pinInput = document.getElementById('pinInput');
+            if (pinInput.value !== OPERATOR_PIN) {
+                showNotification('暗証番号が正しくありません', 'error');
+                return;
+            }
+            pinInput.value = '';
             document.getElementById('busSelectionModal').classList.add('hidden');
             startTracking(selectedBusNumber);
         });
@@ -759,15 +797,54 @@
                 showNotification('位置情報が利用できません', 'error');
                 return;
             }
+            if (!authReady || !window.database) {
+                showNotification('認証準備中です。数秒待ってからもう一度お試しください', 'error');
+                return;
+            }
 
-            // Firebase SDKのインポート（動的）
-            const { ref, update } = await import("https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js");
+            const busId = 'bus' + busNumber;
+            const busRef = ref(window.database, `buses/${busId}`);
+            const sessionId = String(Date.now());
+
+            // 同じ号車が既に運行中でないかを確認しつつ排他的に開始する
+            let result;
+            try {
+                result = await runTransaction(busRef, (current) => {
+                    if (current && current.isActive) {
+                        return; // 中断（既に運行中）
+                    }
+                    return {
+                        ...current,
+                        busNumber: busNumber,
+                        isActive: true,
+                        startTime: Date.now(),
+                        lastUpdate: Date.now(),
+                        currentSessionId: sessionId
+                    };
+                });
+            } catch (error) {
+                console.error('運行開始の記録に失敗:', error);
+                showNotification('運行開始処理に失敗しました。通信環境を確認してください', 'error');
+                return;
+            }
+
+            if (!result.committed) {
+                showNotification(`${busNumber}号車は既に運行中です`, 'error');
+                return;
+            }
+
+            // アプリが強制終了・切断された場合に自動で運行終了扱いにする
+            onDisconnect(busRef).update({ isActive: false, endTime: Date.now() });
 
             isTracking = true;
             startTime = Date.now();
             updateCount = 0;
             path = [];
-            currentBusId = 'bus' + busNumber;
+            currentBusId = busId;
+            currentSessionId = sessionId;
+            lastWrittenPos = null;
+            lastWriteTime = 0;
+            writeFailureNotified = false;
 
             // ボタンの表示を変更
             const button = document.getElementById('startButton');
@@ -786,16 +863,7 @@
                 fontWeight: 'bold'
             });
 
-            // Firebaseに運行開始を記録
-            if (window.database) {
-                const busRef = ref(window.database, `buses/${currentBusId}`);
-                update(busRef, {
-                    busNumber: busNumber,
-                    isActive: true,
-                    startTime: startTime,
-                    lastUpdate: Date.now()
-                });
-            }
+            await requestWakeLock();
 
             // 位置情報の監視開始
             watchId = navigator.geolocation.watchPosition(
@@ -817,9 +885,6 @@
         // 追跡停止
         // ========================================
         async function stopTracking() {
-            // Firebase SDKのインポート（動的）
-            const { ref, update } = await import("https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js");
-
             isTracking = false;
 
             if (watchId !== null) {
@@ -835,11 +900,19 @@
             // Firebaseに運行終了を記録
             if (window.database && currentBusId) {
                 const busRef = ref(window.database, `buses/${currentBusId}`);
-                update(busRef, {
-                    isActive: false,
-                    endTime: Date.now()
-                });
+                try {
+                    await onDisconnect(busRef).cancel();
+                    await update(busRef, {
+                        isActive: false,
+                        endTime: Date.now()
+                    });
+                } catch (error) {
+                    console.error('運行終了の記録に失敗:', error);
+                    showNotification('運行終了の記録に失敗しました（通信環境を確認してください）', 'error');
+                }
             }
+
+            await releaseWakeLock();
 
             // ボタンの表示を変更
             const button = document.getElementById('startButton');
@@ -855,21 +928,36 @@
 
             showNotification('運行を終了しました', 'success');
             currentBusId = null;
+            currentSessionId = null;
         }
+
+        // ========================================
+        // 2点間の距離（メートル）
+        // ========================================
+        function haversineDistanceMeters(a, b) {
+            const R = 6371000;
+            const toRad = (deg) => deg * Math.PI / 180;
+            const dLat = toRad(b.lat - a.lat);
+            const dLng = toRad(b.lng - a.lng);
+            const lat1 = toRad(a.lat);
+            const lat2 = toRad(b.lat);
+            const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+            return 2 * R * Math.asin(Math.sqrt(h));
+        }
+
+        const MIN_WRITE_INTERVAL_MS = 4000;
+        const MIN_WRITE_DISTANCE_M = 15;
 
         // ========================================
         // 位置情報の更新
         // ========================================
         async function updatePosition(position) {
-            // Firebase SDKのインポート（動的）
-            const { ref, set, push } = await import("https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js");
-
             const pos = {
                 lat: position.coords.latitude,
                 lng: position.coords.longitude,
             };
 
-            // マーカーを更新
+            // マーカーを更新（画面表示は毎回反映）
             marker.setPosition(pos);
             map.panTo(pos);
 
@@ -882,29 +970,77 @@
             document.getElementById('updateCount').textContent = updateCount + '回';
             document.getElementById('accuracy').textContent = Math.round(position.coords.accuracy) + 'm';
 
-            // Firebaseに位置情報を送信
-            if (window.database && currentBusId) {
+            console.log('位置更新:', pos);
+
+            if (!window.database || !currentBusId) return;
+
+            // Firebaseへの書き込みは一定時間・距離ごとに間引く（通信量とDB肥大化の抑制）
+            const now = Date.now();
+            const movedEnough = !lastWrittenPos || haversineDistanceMeters(lastWrittenPos, pos) >= MIN_WRITE_DISTANCE_M;
+            const timeEnough = now - lastWriteTime >= MIN_WRITE_INTERVAL_MS;
+            if (!movedEnough && !timeEnough) return;
+
+            try {
                 const locationRef = ref(window.database, `buses/${currentBusId}/location`);
-                set(locationRef, {
+                await set(locationRef, {
                     latitude: pos.lat,
                     longitude: pos.lng,
                     accuracy: position.coords.accuracy,
-                    timestamp: Date.now(),
+                    timestamp: now,
                     heading: position.coords.heading || null,
                     speed: position.coords.speed || null
                 });
+                await update(ref(window.database, `buses/${currentBusId}`), { lastUpdate: now });
 
-                // パスも保存
-                const pathRef = ref(window.database, `buses/${currentBusId}/path`);
-                push(pathRef, {
+                // パスは運行セッションごとに分けて保存（過去分と混ざらないように）
+                const pathRef = ref(window.database, `buses/${currentBusId}/sessions/${currentSessionId}/path`);
+                await push(pathRef, {
                     lat: pos.lat,
                     lng: pos.lng,
-                    timestamp: Date.now()
+                    timestamp: now
                 });
-            }
 
-            console.log('位置更新:', pos);
+                lastWrittenPos = pos;
+                lastWriteTime = now;
+                writeFailureNotified = false;
+            } catch (error) {
+                console.error('位置情報の送信に失敗:', error);
+                if (!writeFailureNotified) {
+                    showNotification('位置情報の送信に失敗しました（通信環境を確認してください）', 'error');
+                    writeFailureNotified = true;
+                }
+            }
         }
+
+        // ========================================
+        // 画面ロック防止（Wake Lock）
+        // ========================================
+        async function requestWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                }
+            } catch (error) {
+                console.warn('画面ロック防止を有効にできませんでした:', error);
+            }
+        }
+
+        async function releaseWakeLock() {
+            if (wakeLock) {
+                try {
+                    await wakeLock.release();
+                } catch (error) {
+                    // 解放失敗は無視してよい
+                }
+                wakeLock = null;
+            }
+        }
+
+        document.addEventListener('visibilitychange', async () => {
+            if (isTracking && document.visibilityState === 'visible') {
+                await requestWakeLock();
+            }
+        });
 
         // ========================================
         // 情報パネルのトグル機能

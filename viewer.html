@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4CAF50">
+    <title>幼稚園バス位置情報 - 保護者用</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Segoe UI', sans-serif;
+            background: #fff5f8;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff9bb7 0%, #ff6b9d 100%);
+            color: white;
+            padding: 8px 15px;
+            box-shadow: 0 2px 8px rgba(255, 107, 157, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .logo {
+            width: 36px;
+            height: 36px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+        }
+
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        .header-text {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .header h1 {
+            font-size: 15px;
+            margin: 0;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        .header .status {
+            font-size: 11px;
+            opacity: 0.9;
+            margin-top: 1px;
+        }
+
+        .map-container {
+            flex: 1;
+            position: relative;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        .bus-list {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(255, 107, 157, 0.15);
+            border: 1px solid rgba(255, 155, 183, 0.2);
+            padding: 8px 12px;
+            min-width: 170px;
+            max-height: 65vh;
+            overflow-y: auto;
+            font-size: 13px;
+        }
+
+        .bus-list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 8px 4px;
+            border-bottom: 1px solid rgba(255, 155, 183, 0.1);
+            cursor: pointer;
+        }
+
+        .bus-list-item:last-child {
+            border-bottom: none;
+        }
+
+        .bus-list-item:active {
+            background: #fef5f8;
+        }
+
+        .bus-list-empty {
+            color: #888;
+            font-size: 12px;
+            padding: 8px 4px;
+        }
+
+        .bus-status-text {
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .status-active { color: #2e7d32; }
+        .status-stale { color: #f57c00; }
+        .status-stopped { color: #999; }
+
+        .bus-badge {
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-block;
+            box-shadow: 0 2px 8px rgba(255, 107, 157, 0.3);
+            white-space: nowrap;
+        }
+
+        .bus-badge.status-active { background: linear-gradient(135deg, #ff9bb7 0%, #ff6b9d 100%); }
+        .bus-badge.status-stale { background: linear-gradient(135deg, #ffd54f 0%, #f5a623 100%); }
+        .bus-badge.status-stopped { background: #999; }
+
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(255, 107, 157, 0.2);
+            z-index: 2000;
+            text-align: center;
+        }
+
+        .loading.hidden {
+            display: none;
+        }
+
+        .spinner {
+            border: 4px solid #fef5f8;
+            border-top: 4px solid #ff6b9d;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .notification {
+            position: fixed;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #f44336;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 2000;
+            display: none;
+            max-width: 90%;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .notification.show {
+            display: block;
+            animation: slideDown 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes slideDown {
+            from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">
+                <img src="logo.png" alt="ロゴ" onerror="this.parentElement.innerHTML='🚐'">
+            </div>
+            <div class="header-text">
+                <h1>幼稚園バス位置情報</h1>
+                <div class="status" id="statusText">認証中...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="map-container">
+        <div id="map"></div>
+        <div class="bus-list" id="busList">
+            <div class="bus-list-empty">読み込み中...</div>
+        </div>
+    </div>
+
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <div>バス情報を取得中...</div>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <!-- 先にグローバル変数とinitMap関数を定義（Google Mapsのコールバックから呼ばれる） -->
+    <script>
+        let map;
+
+        function initMap() {
+            map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 14,
+                center: { lat: 35.6812, lng: 139.7671 },
+                mapTypeControl: false,
+                streetViewControl: false,
+                fullscreenControl: false,
+            });
+
+            if (window.__onMapReady) {
+                window.__onMapReady();
+            }
+        }
+
+        function showNotification(message, type = 'error') {
+            const notificationDiv = document.getElementById('notification');
+            notificationDiv.textContent = message;
+            notificationDiv.className = 'notification show';
+            setTimeout(() => {
+                notificationDiv.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+
+    <!-- Firebase SDKとメインロジック -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+
+        // ========================================
+        // Firebase設定（運転手用ページと同一プロジェクト）
+        // ========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyBDbScn1FCiedXrE3BoORjw1KRPP6Rbw9s",
+            authDomain: "realtimebus-e46a1.firebaseapp.com",
+            databaseURL: "https://realtimebus-e46a1-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "realtimebus-e46a1",
+            storageBucket: "realtimebus-e46a1.firebasestorage.app",
+            messagingSenderId: "508497237681",
+            appId: "1:508497237681:web:a9d898ca4ac098f1133490",
+            measurementId: "G-1PV5B24RK1"
+        };
+
+        const STALE_MS = 60000; // この時間以上lastUpdateが更新されなければ「通信途絶?」表示にする
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        const auth = getAuth(app);
+
+        const busMarkers = {};
+        const busPolylines = {};
+        const subscribedSessions = {};
+        let latestBusData = {};
+
+        window.__onMapReady = () => updateMapMarkers(latestBusData);
+
+        function escapeHtml(str) {
+            return String(str).replace(/[&<>"']/g, (ch) => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[ch]));
+        }
+
+        function getBusStatus(bus) {
+            if (!bus || !bus.isActive) {
+                return { className: 'status-stopped', label: '停止中' };
+            }
+            const last = bus.lastUpdate || 0;
+            if (Date.now() - last > STALE_MS) {
+                return { className: 'status-stale', label: '通信途絶?' };
+            }
+            return { className: 'status-active', label: '運行中' };
+        }
+
+        function markerIconFor(statusClass) {
+            const colors = {
+                'status-active': '#ff6b9d',
+                'status-stale': '#f5a623',
+                'status-stopped': '#999999'
+            };
+            return {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 15,
+                fillColor: colors[statusClass] || '#999999',
+                fillOpacity: 1,
+                strokeColor: 'white',
+                strokeWeight: 3,
+            };
+        }
+
+        function renderBusList(data) {
+            const listEl = document.getElementById('busList');
+            const entries = Object.entries(data);
+
+            if (entries.length === 0) {
+                listEl.innerHTML = '<div class="bus-list-empty">現在運行中のバスはありません</div>';
+                return;
+            }
+
+            listEl.innerHTML = entries.map(([busId, bus]) => {
+                const status = getBusStatus(bus);
+                const label = escapeHtml(bus.busNumber ?? busId);
+                return `<div class="bus-list-item" data-bus-id="${escapeHtml(busId)}">
+                    <span class="bus-badge ${status.className}">${label}号車</span>
+                    <span class="bus-status-text ${status.className}">${status.label}</span>
+                </div>`;
+            }).join('');
+        }
+
+        document.getElementById('busList').addEventListener('click', (event) => {
+            const item = event.target.closest('.bus-list-item');
+            if (!item) return;
+            const busId = item.dataset.busId;
+            const marker = busMarkers[busId];
+            if (marker && map) {
+                map.panTo(marker.getPosition());
+                map.setZoom(16);
+            }
+        });
+
+        function subscribeBusPath(busId, sessionId) {
+            if (subscribedSessions[busId] === sessionId) return;
+            subscribedSessions[busId] = sessionId;
+
+            if (busPolylines[busId]) {
+                busPolylines[busId].setMap(null);
+            }
+            const polyline = new google.maps.Polyline({
+                map: map,
+                strokeColor: '#ff6b9d',
+                strokeOpacity: 0.7,
+                strokeWeight: 3,
+            });
+            busPolylines[busId] = polyline;
+
+            const pathRef = ref(database, `buses/${busId}/sessions/${sessionId}/path`);
+            onValue(pathRef, (snapshot) => {
+                const val = snapshot.val() || {};
+                const points = Object.values(val)
+                    .sort((a, b) => a.timestamp - b.timestamp)
+                    .map((p) => ({ lat: p.lat, lng: p.lng }));
+                polyline.setPath(points);
+            });
+        }
+
+        function updateMapMarkers(data) {
+            if (typeof google === 'undefined' || !map) return;
+
+            const seenIds = new Set();
+
+            Object.entries(data).forEach(([busId, bus]) => {
+                seenIds.add(busId);
+                if (!bus.location) return;
+
+                const pos = { lat: bus.location.latitude, lng: bus.location.longitude };
+                const status = getBusStatus(bus);
+
+                let marker = busMarkers[busId];
+                if (!marker) {
+                    marker = new google.maps.Marker({ map: map });
+                    busMarkers[busId] = marker;
+                }
+                marker.setPosition(pos);
+                marker.setIcon(markerIconFor(status.className));
+                marker.setLabel({
+                    text: String(bus.busNumber ?? ''),
+                    color: 'white',
+                    fontSize: '14px',
+                    fontWeight: 'bold'
+                });
+
+                if (bus.isActive && bus.currentSessionId) {
+                    subscribeBusPath(busId, bus.currentSessionId);
+                }
+            });
+
+            // 消えたバスのマーカー・軌跡を除去
+            Object.keys(busMarkers).forEach((busId) => {
+                if (!seenIds.has(busId)) {
+                    busMarkers[busId].setMap(null);
+                    delete busMarkers[busId];
+                    if (busPolylines[busId]) {
+                        busPolylines[busId].setMap(null);
+                        delete busPolylines[busId];
+                    }
+                    delete subscribedSessions[busId];
+                }
+            });
+        }
+
+        function subscribeBuses() {
+            const busesRef = ref(database, 'buses');
+            onValue(busesRef, (snapshot) => {
+                latestBusData = snapshot.val() || {};
+                renderBusList(latestBusData);
+                updateMapMarkers(latestBusData);
+                document.getElementById('loading').classList.add('hidden');
+            }, (error) => {
+                console.error('バス情報の取得に失敗:', error);
+                showNotification('バス情報の取得に失敗しました');
+                document.getElementById('loading').classList.add('hidden');
+            });
+        }
+
+        // ステータス表示の定期更新（通信途絶の判定を経過時間に応じて更新する）
+        setInterval(() => {
+            renderBusList(latestBusData);
+            updateMapMarkers(latestBusData);
+        }, 15000);
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.getElementById('statusText').textContent = 'リアルタイム更新中';
+                subscribeBuses();
+            } else {
+                document.getElementById('statusText').textContent = '認証中...';
+            }
+        });
+
+        signInAnonymously(auth).catch((error) => {
+            console.error('Firebase auth error:', error);
+            showNotification('認証に失敗しました。通信環境を確認してください');
+            document.getElementById('loading').classList.add('hidden');
+        });
+    </script>
+
+    <!-- Google Maps APIの読み込み -->
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBKHPhToo8HfzoQ4QYgCZ5HQtlyu_u7r70&callback=initMap&language=ja">
+    </script>
+</body>
+</html>
