@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#4CAF50">
+    <meta name="theme-color" content="#ff6b9d">
+    <link rel="manifest" href="manifest-viewer.json">
     <title>幼稚園バス位置情報 - 保護者用</title>
     <style>
         * {
@@ -13,8 +14,9 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Segoe UI', sans-serif;
-            background: #fff5f8;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', 'Segoe UI', sans-serif;
+            background: #f5f5f7;
+            color: #1d1d1f;
             height: 100vh;
             display: flex;
             flex-direction: column;
@@ -22,13 +24,15 @@
         }
 
         .header {
-            background: linear-gradient(135deg, #ff9bb7 0%, #ff6b9d 100%);
-            color: white;
-            padding: 8px 15px;
-            box-shadow: 0 2px 8px rgba(255, 107, 157, 0.3);
+            background: linear-gradient(135deg, #ff8fb3 0%, #ff5c93 100%);
+            color: #ffffff;
+            padding: 10px 16px;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            box-shadow: 0 4px 24px rgba(255, 107, 157, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+            position: relative;
+            z-index: 1100;
         }
 
         .header-content {
@@ -67,13 +71,58 @@
             font-size: 15px;
             margin: 0;
             font-weight: 600;
+            letter-spacing: -0.2px;
             line-height: 1.2;
         }
 
         .header .status {
             font-size: 11px;
-            opacity: 0.9;
+            color: rgba(255, 255, 255, 0.85);
             margin-top: 1px;
+        }
+
+        .menu-button {
+            flex: none;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.55);
+            background: rgba(255, 255, 255, 0.25);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+            color: #ffffff;
+            font-size: 17px;
+            line-height: 1;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .drawer-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.25);
+            z-index: 2400;
+        }
+
+        .drawer-backdrop.open {
+            display: block;
+        }
+
+        .notice-banner {
+            background: linear-gradient(135deg, rgba(255, 159, 10, 0.94) 0%, rgba(255, 120, 0, 0.94) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            color: #ffffff;
+            padding: 11px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: -0.2px;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+        }
+
+        .notice-banner + .notice-banner {
+            border-top: 1px solid rgba(255, 255, 255, 0.3);
         }
 
         .map-container {
@@ -86,81 +135,338 @@
             height: 100%;
         }
 
-        .bus-list {
+        .side-stack {
             position: absolute;
             top: 15px;
             right: 15px;
             z-index: 1000;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(255, 107, 157, 0.15);
-            border: 1px solid rgba(255, 155, 183, 0.2);
-            padding: 8px 12px;
-            min-width: 170px;
-            max-height: 65vh;
-            overflow-y: auto;
-            font-size: 13px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 200px;
         }
 
-        .bus-list-item {
+        /* 画面下部の号車ステータスバー（常時表示・一目で状態がわかる） */
+        .bus-strip {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: 24px;
+            z-index: 1000;
+            display: flex;
+            gap: 8px;
+            padding: 8px;
+            border-radius: 9999px;
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0.48) 100%);
+            backdrop-filter: blur(24px) saturate(200%);
+            -webkit-backdrop-filter: blur(24px) saturate(200%);
+            border: 1px solid rgba(255, 255, 255, 0.65);
+            box-shadow: 0 8px 32px rgba(255, 107, 157, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            max-width: 94vw;
+            overflow-x: auto;
+        }
+
+        .bus-strip.hidden {
+            display: none;
+        }
+
+        .bus-strip-chip {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 9px 15px;
+            border: 1px solid rgba(255, 255, 255, 0.85);
+            border-radius: 9999px;
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.68) 100%);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 1);
+            color: #1d1d1f;
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .bus-strip-chip:active {
+            transform: scale(0.95);
+        }
+
+        .bus-strip-chip.status-active {
+            border-color: rgba(255, 107, 157, 0.7);
+            box-shadow: 0 0 12px rgba(255, 107, 157, 0.45), inset 0 1px 0 rgba(255, 255, 255, 1);
+        }
+
+        .status-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            flex: none;
+        }
+
+        .bus-strip-chip.status-active .status-dot {
+            background: #ff4d88;
+            animation: pulse 1.6s ease-in-out infinite;
+        }
+
+        .bus-strip-chip.status-stale .status-dot {
+            background: #ff9500;
+        }
+
+        .bus-strip-chip.status-stopped .status-dot {
+            background: #a0a0a6;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 77, 136, 0.55); }
+            50% { box-shadow: 0 0 0 6px rgba(255, 77, 136, 0); }
+        }
+
+        /* 号車詳細カード（チップ/マーカーのタップで下からせり出す） */
+        .bus-card {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%) translateY(16px);
+            bottom: 88px;
+            width: min(360px, 92vw);
+            z-index: 1500;
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
+            backdrop-filter: blur(28px) saturate(200%);
+            -webkit-backdrop-filter: blur(28px) saturate(200%);
+            border: 1px solid rgba(255, 255, 255, 0.75);
+            border-radius: 24px;
+            box-shadow: 0 16px 48px rgba(255, 107, 157, 0.28), inset 0 1px 0 rgba(255, 255, 255, 1);
+            padding: 14px;
+            font-size: 13px;
+            opacity: 0;
+            pointer-events: none;
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s;
+        }
+
+        .bus-card.open {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .bus-card-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 10px;
-            padding: 8px 4px;
-            border-bottom: 1px solid rgba(255, 155, 183, 0.1);
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .bus-card-title {
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: -0.2px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .bus-card-status {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 9999px;
+            color: #ffffff;
+        }
+
+        .bus-card-status.status-active { background: linear-gradient(145deg, #ff8fb3 0%, #ff4d88 100%); }
+        .bus-card-status.status-stale { background: linear-gradient(145deg, #ffb340 0%, #ff8c00 100%); }
+        .bus-card-status.status-stopped { background: linear-gradient(145deg, #9a9aa0 0%, #7c7c82 100%); }
+
+        .bus-card-close {
+            flex: none;
+            width: 28px;
+            height: 28px;
+            border: 1px solid rgba(255, 255, 255, 0.85);
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 1);
+            color: #7a7a7a;
+            font-size: 13px;
             cursor: pointer;
         }
 
-        .bus-list-item:last-child {
+        .bus-card-row {
+            color: #7a7a7a;
+            font-size: 12px;
+            padding: 3px 0;
+        }
+
+        .bus-card-notice {
+            background: linear-gradient(135deg, rgba(255, 159, 10, 0.16) 0%, rgba(255, 120, 0, 0.12) 100%);
+            border: 1px solid rgba(255, 149, 0, 0.35);
+            border-radius: 12px;
+            padding: 8px 10px;
+            margin: 6px 0;
+            color: #1d1d1f;
+            font-weight: 600;
+        }
+
+        .bus-card-log {
+            margin-top: 4px;
+            max-height: 110px;
+            overflow-y: auto;
+        }
+
+        .bus-card-push {
+            width: 100%;
+            margin-top: 10px;
+            padding: 10px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.45);
+            border-radius: 9999px;
+            background: linear-gradient(145deg, #ff8fb3 0%, #ff4d88 100%);
+            box-shadow: 0 8px 20px rgba(255, 107, 157, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .bus-card-push:active {
+            transform: scale(0.97);
+        }
+
+        .bus-card-push.subscribed {
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.68) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.85);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 1);
+            color: #1d1d1f;
+        }
+
+        .push-panel {
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0.48) 100%);
+            backdrop-filter: blur(24px) saturate(200%);
+            -webkit-backdrop-filter: blur(24px) saturate(200%);
+            border-radius: 22px;
+            border: 1px solid rgba(255, 255, 255, 0.65);
+            box-shadow: 0 8px 32px rgba(255, 107, 157, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            padding: 8px;
+            font-size: 12px;
+        }
+
+        .push-panel.hidden {
+            display: none;
+        }
+
+        .push-toggle {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.45);
+            border-radius: 9999px;
+            background: linear-gradient(145deg, #ff8fb3 0%, #ff4d88 100%);
+            box-shadow: 0 8px 20px rgba(255, 107, 157, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .push-toggle:active {
+            transform: scale(0.97);
+        }
+
+        .push-options {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .push-options.hidden {
+            display: none;
+        }
+
+        .push-options-title {
+            color: #7a7a7a;
+            font-size: 11px;
+            padding: 2px 4px;
+        }
+
+        .push-option {
+            padding: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.85);
+            border-radius: 9999px;
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.68) 100%);
+            box-shadow: 0 3px 10px rgba(255, 107, 157, 0.12), inset 0 1px 0 rgba(255, 255, 255, 1);
+            color: #1d1d1f;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s;
+        }
+
+        .push-option:active {
+            background: rgba(255, 240, 245, 0.9);
+            transform: scale(0.97);
+        }
+
+        .push-note {
+            color: #7a7a7a;
+            font-size: 11px;
+            padding: 4px;
+            line-height: 1.5;
+        }
+
+        .log-panel {
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0.48) 100%);
+            backdrop-filter: blur(24px) saturate(200%);
+            -webkit-backdrop-filter: blur(24px) saturate(200%);
+            border-radius: 22px;
+            border: 1px solid rgba(255, 255, 255, 0.65);
+            box-shadow: 0 8px 32px rgba(255, 107, 157, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            padding: 8px 12px;
+            font-size: 12px;
+            max-height: 20vh;
+            overflow-y: auto;
+        }
+
+        .log-panel.hidden {
+            display: none;
+        }
+
+        .log-panel-title {
+            color: #7a7a7a;
+            font-size: 11px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            margin-bottom: 4px;
+        }
+
+        .log-item {
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            color: #1d1d1f;
+            line-height: 1.4;
+        }
+
+        .log-item:last-child {
             border-bottom: none;
         }
 
-        .bus-list-item:active {
-            background: #fef5f8;
-        }
-
-        .bus-list-empty {
-            color: #888;
-            font-size: 12px;
-            padding: 8px 4px;
-        }
-
-        .bus-status-text {
+        .log-item .log-time {
+            color: #7a7a7a;
             font-size: 11px;
-            font-weight: 600;
-            white-space: nowrap;
+            margin-right: 4px;
         }
-
-        .status-active { color: #2e7d32; }
-        .status-stale { color: #f57c00; }
-        .status-stopped { color: #999; }
-
-        .bus-badge {
-            color: white;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 600;
-            display: inline-block;
-            box-shadow: 0 2px 8px rgba(255, 107, 157, 0.3);
-            white-space: nowrap;
-        }
-
-        .bus-badge.status-active { background: linear-gradient(135deg, #ff9bb7 0%, #ff6b9d 100%); }
-        .bus-badge.status-stale { background: linear-gradient(135deg, #ffd54f 0%, #f5a623 100%); }
-        .bus-badge.status-stopped { background: #999; }
 
         .loading {
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: white;
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.72) 100%);
+            backdrop-filter: blur(24px) saturate(200%);
+            -webkit-backdrop-filter: blur(24px) saturate(200%);
             padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(255, 107, 157, 0.2);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.75);
+            box-shadow: 0 16px 48px rgba(255, 107, 157, 0.25), inset 0 1px 0 rgba(255, 255, 255, 1);
             z-index: 2000;
             text-align: center;
         }
@@ -170,7 +476,7 @@
         }
 
         .spinner {
-            border: 4px solid #fef5f8;
+            border: 4px solid #f0f0f0;
             border-top: 4px solid #ff6b9d;
             border-radius: 50%;
             width: 40px;
@@ -189,16 +495,19 @@
             top: 60px;
             left: 50%;
             transform: translateX(-50%);
-            background: #f44336;
+            background: linear-gradient(145deg, rgba(255, 90, 82, 0.95) 0%, rgba(224, 53, 43, 0.95) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            box-shadow: 0 10px 30px rgba(224, 53, 43, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.4);
             color: white;
             padding: 12px 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            border-radius: 16px;
             z-index: 2000;
             display: none;
             max-width: 90%;
-            font-size: 13px;
-            font-weight: 500;
+            font-size: 14px;
+            font-weight: 400;
         }
 
         .notification.show {
@@ -209,6 +518,41 @@
         @keyframes slideDown {
             from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
             to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+
+        /* PCでは従来どおり右上に浮かせ、スマホではメニューから開くドロワーにする */
+        @media (min-width: 768px) {
+            .menu-button {
+                display: none;
+            }
+        }
+
+        @media (max-width: 767px) {
+            .side-stack {
+                position: fixed;
+                top: 0;
+                right: 0;
+                bottom: 0;
+                width: min(300px, 82vw);
+                padding: 16px 14px;
+                background: linear-gradient(160deg, rgba(255, 255, 255, 0.88) 0%, rgba(255, 255, 255, 0.7) 100%);
+                backdrop-filter: blur(30px) saturate(200%);
+                -webkit-backdrop-filter: blur(30px) saturate(200%);
+                border-left: 1px solid rgba(255, 255, 255, 0.7);
+                box-shadow: -12px 0 40px rgba(255, 107, 157, 0.25);
+                transform: translateX(105%);
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                z-index: 2500;
+                overflow-y: auto;
+            }
+
+            .side-stack.open {
+                transform: translateX(0);
+            }
+
+            .log-panel {
+                max-height: none;
+            }
         }
     </style>
 </head>
@@ -223,12 +567,32 @@
                 <div class="status" id="statusText">認証中...</div>
             </div>
         </div>
+        <button class="menu-button" id="menuButton" aria-label="メニュー">☰</button>
     </div>
+
+    <div id="noticeBanners"></div>
 
     <div class="map-container">
         <div id="map"></div>
-        <div class="bus-list" id="busList">
-            <div class="bus-list-empty">読み込み中...</div>
+        <div class="drawer-backdrop" id="drawerBackdrop"></div>
+        <div class="bus-strip hidden" id="busStrip"></div>
+        <div class="bus-card" id="busCard"></div>
+        <div class="side-stack" id="sideStack">
+            <div class="push-panel hidden" id="pushPanel">
+                <button class="push-toggle" id="pushToggleButton">🔔 遅延通知を受け取る</button>
+                <div class="push-options hidden" id="pushOptions">
+                    <div class="push-options-title">通知する号車を選択</div>
+                    <button class="push-option" data-bus="bus1">1号車</button>
+                    <button class="push-option" data-bus="bus2">2号車</button>
+                    <button class="push-option" data-bus="bus3">3号車</button>
+                    <button class="push-option" data-bus="bus6">6号車</button>
+                    <button class="push-option" data-bus="all">すべての号車</button>
+                </div>
+            </div>
+            <div class="log-panel hidden" id="logPanel">
+                <div class="log-panel-title">📋 今日の連絡</div>
+                <div id="logItems"></div>
+            </div>
         </div>
     </div>
 
@@ -244,9 +608,10 @@
         let map;
 
         function initMap() {
+            // 幼稚園（さいたま市岩槻区宮町1-6-20）付近
             map = new google.maps.Map(document.getElementById('map'), {
                 zoom: 14,
-                center: { lat: 35.6812, lng: 139.7671 },
+                center: { lat: 35.9580, lng: 139.6992 },
                 mapTypeControl: false,
                 streetViewControl: false,
                 fullscreenControl: false,
@@ -265,13 +630,28 @@
                 notificationDiv.classList.remove('show');
             }, 3000);
         }
+
+        // ========================================
+        // ドロワー（スマホ時のメニュー）の開閉
+        // ========================================
+        function setDrawer(open) {
+            document.getElementById('sideStack').classList.toggle('open', open);
+            document.getElementById('drawerBackdrop').classList.toggle('open', open);
+        }
+
+        document.getElementById('menuButton').addEventListener('click', () => {
+            setDrawer(!document.getElementById('sideStack').classList.contains('open'));
+        });
+
+        document.getElementById('drawerBackdrop').addEventListener('click', () => setDrawer(false));
     </script>
 
     <!-- Firebase SDKとメインロジック -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+        import { getMessaging, getToken, deleteToken, isSupported as isMessagingSupported } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-messaging.js";
 
         // ========================================
         // Firebase設定（運転手用ページと同一プロジェクト）
@@ -296,9 +676,25 @@
         const busMarkers = {};
         const busPolylines = {};
         const subscribedSessions = {};
+        const pathUnsubscribes = {};
         let latestBusData = {};
+        let initialCentered = false;
 
-        window.__onMapReady = () => updateMapMarkers(latestBusData);
+        window.__onMapReady = () => {
+            updateMapMarkers(latestBusData);
+            centerOnActiveBusOnce();
+            map.addListener('click', () => closeBusCard());
+        };
+
+        // ページを開いたとき、運行中のバスがいれば最初の1回だけそこへ寄せる
+        function centerOnActiveBusOnce() {
+            if (initialCentered || !map) return;
+            const active = Object.values(latestBusData).find((b) => b && b.isActive && b.location);
+            if (active) {
+                map.setCenter({ lat: active.location.latitude, lng: active.location.longitude });
+                initialCentered = true;
+            }
+        }
 
         function escapeHtml(str) {
             return String(str).replace(/[&<>"']/g, (ch) => ({
@@ -320,52 +716,298 @@
         function markerIconFor(statusClass) {
             const colors = {
                 'status-active': '#ff6b9d',
-                'status-stale': '#f5a623',
-                'status-stopped': '#999999'
+                'status-stale': '#ff9500',
+                'status-stopped': '#86868b'
             };
             return {
                 path: google.maps.SymbolPath.CIRCLE,
                 scale: 15,
-                fillColor: colors[statusClass] || '#999999',
+                fillColor: colors[statusClass] || '#86868b',
                 fillOpacity: 1,
                 strokeColor: 'white',
                 strokeWeight: 3,
             };
         }
 
-        function renderBusList(data) {
-            const listEl = document.getElementById('busList');
+        function renderBusStrip(data) {
+            const stripEl = document.getElementById('busStrip');
             const entries = Object.entries(data);
 
             if (entries.length === 0) {
-                listEl.innerHTML = '<div class="bus-list-empty">現在運行中のバスはありません</div>';
+                stripEl.classList.add('hidden');
                 return;
             }
 
-            listEl.innerHTML = entries.map(([busId, bus]) => {
+            stripEl.innerHTML = entries.map(([busId, bus]) => {
                 const status = getBusStatus(bus);
                 const label = escapeHtml(bus.busNumber ?? busId);
-                return `<div class="bus-list-item" data-bus-id="${escapeHtml(busId)}">
-                    <span class="bus-badge ${status.className}">${label}号車</span>
-                    <span class="bus-status-text ${status.className}">${status.label}</span>
-                </div>`;
+                return `<button class="bus-strip-chip ${status.className}" data-bus-id="${escapeHtml(busId)}" title="${status.label}">
+                    <span class="status-dot"></span>${label}号車
+                </button>`;
             }).join('');
+            stripEl.classList.remove('hidden');
         }
 
-        document.getElementById('busList').addEventListener('click', (event) => {
-            const item = event.target.closest('.bus-list-item');
-            if (!item) return;
-            const busId = item.dataset.busId;
+        document.getElementById('busStrip').addEventListener('click', (event) => {
+            const chip = event.target.closest('.bus-strip-chip');
+            if (!chip) return;
+            const busId = chip.dataset.busId;
             const marker = busMarkers[busId];
             if (marker && map) {
                 map.panTo(marker.getPosition());
                 map.setZoom(16);
+            }
+            openBusCard(busId);
+        });
+
+        // ========================================
+        // プッシュ通知の購読設定
+        // VAPID_KEY: Firebase Console → プロジェクト設定 → Cloud Messaging →
+        // Webプッシュ証明書 の公開鍵を貼る。空のままだと通知機能は表示されない
+        // ========================================
+        const VAPID_KEY = 'BFnFY8TKgdkfU-MKus2bno673cCh84Y1mCRP-EPu_5Ld4z9MRgqSPbj3EpaoXwMWLf2aMrLnhmgRWox8fRLfgk8';
+        const PUSH_STORAGE_KEY = 'busPushSubscription';
+        let pushSupported = false;
+
+        const pushPanel = document.getElementById('pushPanel');
+        const pushToggleButton = document.getElementById('pushToggleButton');
+        const pushOptions = document.getElementById('pushOptions');
+
+        function busLabelFor(busId) {
+            return busId === 'all' ? 'すべての号車' : busId.replace('bus', '') + '号車';
+        }
+
+        function getSavedSubscription() {
+            try {
+                return JSON.parse(localStorage.getItem(PUSH_STORAGE_KEY));
+            } catch (error) {
+                return null;
+            }
+        }
+
+        function refreshPushStatus() {
+            const saved = getSavedSubscription();
+            pushToggleButton.textContent = (saved && saved.token)
+                ? `🔕 通知オン: ${busLabelFor(saved.busId)}（タップで解除）`
+                : '🔔 遅延通知を受け取る';
+        }
+
+        async function setupPushUI() {
+            if (!VAPID_KEY) return; // 鍵の設定前は機能ごと非表示
+
+            if (!('serviceWorker' in navigator) || !('Notification' in window)
+                || !(await isMessagingSupported().catch(() => false))) {
+                // iPhoneのブラウザ表示など、通知非対応の環境では案内だけ出す
+                pushPanel.innerHTML = '<div class="push-note">📱 iPhoneの方は、共有メニューから「ホーム画面に追加」して開くと遅延通知を設定できます</div>';
+                pushPanel.classList.remove('hidden');
+                return;
+            }
+
+            pushSupported = true;
+            pushPanel.classList.remove('hidden');
+            refreshPushStatus();
+
+            pushToggleButton.addEventListener('click', () => {
+                const saved = getSavedSubscription();
+                if (saved && saved.token) {
+                    unsubscribePush(saved);
+                } else {
+                    pushOptions.classList.toggle('hidden');
+                }
+            });
+
+            document.querySelectorAll('.push-option').forEach((button) => {
+                button.addEventListener('click', () => subscribePush(button.dataset.bus));
+            });
+        }
+
+        async function subscribePush(busId) {
+            pushOptions.classList.add('hidden');
+            try {
+                const permission = await Notification.requestPermission();
+                if (permission !== 'granted') {
+                    showNotification('通知が許可されませんでした。端末の設定を確認してください');
+                    return;
+                }
+                // GitHub Pages等ではオリジン直下にSWを置けないため明示登録して渡す
+                const registration = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
+                const messaging = getMessaging(app);
+                const token = await getToken(messaging, {
+                    vapidKey: VAPID_KEY,
+                    serviceWorkerRegistration: registration
+                });
+                await set(ref(database, `pushSubscriptions/${token}`), {
+                    busId: busId,
+                    updatedAt: Date.now()
+                });
+                localStorage.setItem(PUSH_STORAGE_KEY, JSON.stringify({ token: token, busId: busId }));
+                refreshPushStatus();
+                showNotification(`${busLabelFor(busId)}の遅延通知を受け取ります`);
+            } catch (error) {
+                console.error('通知の設定に失敗:', error);
+                showNotification('通知の設定に失敗しました');
+            }
+        }
+
+        async function unsubscribePush(saved) {
+            try {
+                await set(ref(database, `pushSubscriptions/${saved.token}`), null);
+                await deleteToken(getMessaging(app)).catch(() => {});
+                localStorage.removeItem(PUSH_STORAGE_KEY);
+                refreshPushStatus();
+                showNotification('遅延通知を解除しました');
+            } catch (error) {
+                console.error('通知の解除に失敗:', error);
+                showNotification('通知の解除に失敗しました');
+            }
+        }
+
+        setupPushUI();
+
+        // ========================================
+        // 運転手からの遅延連絡バナー
+        // ========================================
+        function renderNotices(data) {
+            const container = document.getElementById('noticeBanners');
+            container.innerHTML = Object.entries(data)
+                .filter(([busId, bus]) => bus && bus.isActive && bus.notice && bus.notice.message)
+                .map(([busId, bus]) => {
+                    const label = escapeHtml(bus.busNumber ?? busId);
+                    const time = new Date(bus.notice.timestamp || Date.now())
+                        .toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+                    return `<div class="notice-banner">🚌 ${label}号車: ${escapeHtml(bus.notice.message)}（${time}）</div>`;
+                }).join('');
+        }
+
+        // ========================================
+        // 今日の連絡履歴（全号車分をまとめて新しい順に表示）
+        // ========================================
+        function renderNoticeLog(data) {
+            const todayStart = new Date();
+            todayStart.setHours(0, 0, 0, 0);
+
+            const entries = [];
+            Object.entries(data).forEach(([busId, bus]) => {
+                if (!bus || !bus.noticeLog) return;
+                const label = escapeHtml(bus.busNumber ?? busId);
+                Object.values(bus.noticeLog).forEach((entry) => {
+                    if (entry && entry.timestamp >= todayStart.getTime()) {
+                        entries.push({ label: label, message: entry.message, timestamp: entry.timestamp });
+                    }
+                });
+            });
+
+            const panel = document.getElementById('logPanel');
+            if (entries.length === 0) {
+                panel.classList.add('hidden');
+                return;
+            }
+
+            entries.sort((a, b) => b.timestamp - a.timestamp);
+            document.getElementById('logItems').innerHTML = entries.slice(0, 20).map((entry) => {
+                const time = new Date(entry.timestamp)
+                    .toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+                return `<div class="log-item"><span class="log-time">${time}</span>${entry.label}号車: ${escapeHtml(entry.message)}</div>`;
+            }).join('');
+            panel.classList.remove('hidden');
+        }
+
+        // ========================================
+        // 号車詳細カード（チップ/マーカーのタップで表示）
+        // 状態・最終更新・現在の連絡・今日の履歴・通知設定をまとめて見られる
+        // ========================================
+        let openBusCardId = null;
+
+        function timeStr(ts) {
+            return new Date(ts).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function renderBusCard(busId) {
+            const bus = latestBusData[busId];
+            if (!bus) {
+                closeBusCard();
+                return;
+            }
+            const status = getBusStatus(bus);
+            const label = escapeHtml(bus.busNumber ?? busId);
+            const lastUpdate = bus.lastUpdate ? timeStr(bus.lastUpdate) : 'なし';
+
+            let html = `<div class="bus-card-header">
+                <div class="bus-card-title">🚌 ${label}号車 <span class="bus-card-status ${status.className}">${status.label}</span></div>
+                <button class="bus-card-close" data-action="close" aria-label="閉じる">✕</button>
+            </div>
+            <div class="bus-card-row">最終更新: ${lastUpdate}</div>`;
+
+            if (bus.isActive && bus.notice && bus.notice.message) {
+                html += `<div class="bus-card-notice">📢 ${escapeHtml(bus.notice.message)}（${timeStr(bus.notice.timestamp || Date.now())}）</div>`;
+            }
+
+            const todayStart = new Date();
+            todayStart.setHours(0, 0, 0, 0);
+            const logs = Object.values(bus.noticeLog || {})
+                .filter((entry) => entry && entry.timestamp >= todayStart.getTime())
+                .sort((a, b) => b.timestamp - a.timestamp)
+                .slice(0, 5);
+            if (logs.length > 0) {
+                html += `<div class="bus-card-row">今日の連絡</div><div class="bus-card-log">`
+                    + logs.map((entry) =>
+                        `<div class="log-item"><span class="log-time">${timeStr(entry.timestamp)}</span>${escapeHtml(entry.message)}</div>`
+                    ).join('')
+                    + `</div>`;
+            }
+
+            if (pushSupported) {
+                const saved = getSavedSubscription();
+                if (saved && saved.token && saved.busId === busId) {
+                    html += `<button class="bus-card-push subscribed" data-action="unsubscribe">🔕 この号車の通知をオフにする</button>`;
+                } else {
+                    html += `<button class="bus-card-push" data-action="subscribe">🔔 この号車の遅延通知を受け取る</button>`;
+                }
+            }
+
+            document.getElementById('busCard').innerHTML = html;
+        }
+
+        function openBusCard(busId) {
+            openBusCardId = busId;
+            renderBusCard(busId);
+            document.getElementById('busCard').classList.add('open');
+        }
+
+        function closeBusCard() {
+            openBusCardId = null;
+            document.getElementById('busCard').classList.remove('open');
+        }
+
+        document.getElementById('busCard').addEventListener('click', async (event) => {
+            const target = event.target.closest('[data-action]');
+            if (!target) return;
+            const action = target.dataset.action;
+
+            if (action === 'close') {
+                closeBusCard();
+                return;
+            }
+            if (action === 'subscribe' && openBusCardId) {
+                await subscribePush(openBusCardId);
+                if (openBusCardId) renderBusCard(openBusCardId);
+                return;
+            }
+            if (action === 'unsubscribe') {
+                const saved = getSavedSubscription();
+                if (saved) await unsubscribePush(saved);
+                if (openBusCardId) renderBusCard(openBusCardId);
             }
         });
 
         function subscribeBusPath(busId, sessionId) {
             if (subscribedSessions[busId] === sessionId) return;
             subscribedSessions[busId] = sessionId;
+
+            // 前のセッションの監視を解除（開きっぱなしの端末でリスナーが溜まるのを防ぐ）
+            if (pathUnsubscribes[busId]) {
+                pathUnsubscribes[busId]();
+            }
 
             if (busPolylines[busId]) {
                 busPolylines[busId].setMap(null);
@@ -379,7 +1021,7 @@
             busPolylines[busId] = polyline;
 
             const pathRef = ref(database, `buses/${busId}/sessions/${sessionId}/path`);
-            onValue(pathRef, (snapshot) => {
+            pathUnsubscribes[busId] = onValue(pathRef, (snapshot) => {
                 const val = snapshot.val() || {};
                 const points = Object.values(val)
                     .sort((a, b) => a.timestamp - b.timestamp)
@@ -403,6 +1045,7 @@
                 let marker = busMarkers[busId];
                 if (!marker) {
                     marker = new google.maps.Marker({ map: map });
+                    marker.addListener('click', () => openBusCard(busId));
                     busMarkers[busId] = marker;
                 }
                 marker.setPosition(pos);
@@ -419,7 +1062,7 @@
                 }
             });
 
-            // 消えたバスのマーカー・軌跡を除去
+            // 消えたバスのマーカー・軌跡・監視を除去
             Object.keys(busMarkers).forEach((busId) => {
                 if (!seenIds.has(busId)) {
                     busMarkers[busId].setMap(null);
@@ -427,6 +1070,10 @@
                     if (busPolylines[busId]) {
                         busPolylines[busId].setMap(null);
                         delete busPolylines[busId];
+                    }
+                    if (pathUnsubscribes[busId]) {
+                        pathUnsubscribes[busId]();
+                        delete pathUnsubscribes[busId];
                     }
                     delete subscribedSessions[busId];
                 }
@@ -437,8 +1084,12 @@
             const busesRef = ref(database, 'buses');
             onValue(busesRef, (snapshot) => {
                 latestBusData = snapshot.val() || {};
-                renderBusList(latestBusData);
+                renderBusStrip(latestBusData);
                 updateMapMarkers(latestBusData);
+                renderNotices(latestBusData);
+                renderNoticeLog(latestBusData);
+                if (openBusCardId) renderBusCard(openBusCardId);
+                centerOnActiveBusOnce();
                 document.getElementById('loading').classList.add('hidden');
             }, (error) => {
                 console.error('バス情報の取得に失敗:', error);
@@ -449,7 +1100,7 @@
 
         // ステータス表示の定期更新（通信途絶の判定を経過時間に応じて更新する）
         setInterval(() => {
-            renderBusList(latestBusData);
+            renderBusStrip(latestBusData);
             updateMapMarkers(latestBusData);
         }, 15000);
 

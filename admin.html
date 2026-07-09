@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#ff6b9d">
+    <title>幼稚園バス管理 - 運行履歴（園用）</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', 'Segoe UI', sans-serif;
+            background: #f5f5f7;
+            color: #1d1d1f;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff8fb3 0%, #ff5c93 100%);
+            color: #ffffff;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 24px rgba(255, 107, 157, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+            position: relative;
+            z-index: 1100;
+        }
+
+        .header h1 {
+            font-size: 15px;
+            margin: 0;
+            font-weight: 600;
+            letter-spacing: -0.2px;
+            line-height: 1.2;
+        }
+
+        .header .status {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.85);
+            margin-top: 1px;
+        }
+
+        .menu-button {
+            flex: none;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.55);
+            background: rgba(255, 255, 255, 0.25);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+            color: #ffffff;
+            font-size: 17px;
+            line-height: 1;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .drawer-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.25);
+            z-index: 2400;
+        }
+
+        .drawer-backdrop.open {
+            display: block;
+        }
+
+        @media (min-width: 768px) {
+            .menu-button {
+                display: none;
+            }
+        }
+
+        @media (max-width: 767px) {
+            .side-stack {
+                position: fixed;
+                top: 0;
+                right: 0;
+                bottom: 0;
+                width: min(310px, 85vw);
+                padding: 16px 14px;
+                background: linear-gradient(160deg, rgba(255, 255, 255, 0.88) 0%, rgba(255, 255, 255, 0.7) 100%);
+                backdrop-filter: blur(30px) saturate(200%);
+                -webkit-backdrop-filter: blur(30px) saturate(200%);
+                border-left: 1px solid rgba(255, 255, 255, 0.7);
+                box-shadow: -12px 0 40px rgba(255, 107, 157, 0.25);
+                transform: translateX(105%);
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                z-index: 2500;
+                overflow-y: auto;
+            }
+
+            .side-stack.open {
+                transform: translateX(0);
+            }
+
+            .session-list {
+                max-height: none;
+            }
+        }
+
+        .map-container {
+            flex: 1;
+            position: relative;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        .side-stack {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 230px;
+        }
+
+        .glass-panel {
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0.48) 100%);
+            backdrop-filter: blur(24px) saturate(200%);
+            -webkit-backdrop-filter: blur(24px) saturate(200%);
+            border-radius: 22px;
+            border: 1px solid rgba(255, 255, 255, 0.65);
+            box-shadow: 0 8px 32px rgba(255, 107, 157, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            padding: 10px 12px;
+            font-size: 13px;
+        }
+
+        .panel-title {
+            color: #7a7a7a;
+            font-size: 11px;
+            padding-bottom: 6px;
+        }
+
+        .bus-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .bus-chip {
+            padding: 7px 14px;
+            border: 1px solid rgba(255, 255, 255, 0.85);
+            border-radius: 9999px;
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.68) 100%);
+            box-shadow: 0 3px 10px rgba(255, 107, 157, 0.12), inset 0 1px 0 rgba(255, 255, 255, 1);
+            color: #1d1d1f;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: box-shadow 0.2s, transform 0.2s;
+        }
+
+        .bus-chip:active {
+            transform: scale(0.96);
+        }
+
+        .bus-chip.selected {
+            border-color: rgba(255, 107, 157, 0.9);
+            box-shadow: 0 0 0 2px rgba(255, 107, 157, 0.85),
+                        0 4px 14px rgba(255, 107, 157, 0.3),
+                        inset 0 1px 0 rgba(255, 255, 255, 1);
+            background: linear-gradient(160deg, #ffffff 0%, #fff0f5 100%);
+        }
+
+        .session-list {
+            max-height: 45vh;
+            overflow-y: auto;
+        }
+
+        .session-item {
+            padding: 8px 6px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            border-radius: 8px;
+            cursor: pointer;
+            line-height: 1.4;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+        }
+
+        .session-delete {
+            flex: none;
+            width: 28px;
+            height: 28px;
+            border: 1px solid rgba(255, 255, 255, 0.85);
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 1);
+            font-size: 13px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .session-delete:active {
+            transform: scale(0.9);
+        }
+
+        .danger-button {
+            width: 100%;
+            margin-top: 8px;
+            padding: 9px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.45);
+            border-radius: 9999px;
+            background: linear-gradient(145deg, rgba(255, 111, 97, 0.95) 0%, rgba(224, 53, 43, 0.95) 100%);
+            box-shadow: 0 6px 16px rgba(224, 53, 43, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .danger-button:active {
+            transform: scale(0.97);
+        }
+
+        .danger-button.hidden {
+            display: none;
+        }
+
+        .session-item:last-child {
+            border-bottom: none;
+        }
+
+        .session-item:active {
+            background: rgba(255, 255, 255, 0.7);
+        }
+
+        .session-item.selected {
+            background: #ffffff;
+            box-shadow: inset 0 0 0 2px rgba(255, 107, 157, 0.85);
+        }
+
+        .session-date {
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .session-meta {
+            color: #7a7a7a;
+            font-size: 11px;
+        }
+
+        .empty-note {
+            color: #7a7a7a;
+            font-size: 12px;
+            padding: 6px 2px;
+        }
+
+        .reload-button {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.45);
+            border-radius: 9999px;
+            background: linear-gradient(145deg, #ff8fb3 0%, #ff4d88 100%);
+            box-shadow: 0 8px 20px rgba(255, 107, 157, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .reload-button:active {
+            transform: scale(0.97);
+        }
+
+        /* PIN ゲート */
+        .pin-gate {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+        }
+
+        .pin-gate.hidden {
+            display: none;
+        }
+
+        .pin-card {
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.74) 100%);
+            backdrop-filter: blur(30px) saturate(200%);
+            -webkit-backdrop-filter: blur(30px) saturate(200%);
+            border: 1px solid rgba(255, 255, 255, 0.75);
+            border-radius: 28px;
+            padding: 24px;
+            max-width: 340px;
+            width: 90%;
+            box-shadow: 0 24px 60px rgba(255, 107, 157, 0.3), inset 0 1px 0 rgba(255, 255, 255, 1);
+            text-align: center;
+        }
+
+        .pin-card h2 {
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: -0.2px;
+            margin-bottom: 16px;
+        }
+
+        .pin-input {
+            width: 100%;
+            padding: 12px 20px;
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            border-radius: 9999px;
+            font-size: 17px;
+            margin-bottom: 14px;
+            background: rgba(255, 255, 255, 0.75);
+            box-shadow: inset 0 2px 6px rgba(31, 38, 135, 0.06);
+            color: #1d1d1f;
+            text-align: center;
+        }
+
+        .pin-input:focus {
+            outline: none;
+            border-color: rgba(255, 107, 157, 0.8);
+            box-shadow: 0 0 0 3px rgba(255, 107, 157, 0.18), inset 0 2px 6px rgba(31, 38, 135, 0.06);
+        }
+
+        .pin-submit {
+            width: 100%;
+            padding: 12px 22px;
+            border: 1px solid rgba(255, 255, 255, 0.45);
+            border-radius: 9999px;
+            background: linear-gradient(145deg, #ff8fb3 0%, #ff4d88 100%);
+            box-shadow: 0 8px 20px rgba(255, 107, 157, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .pin-submit:active {
+            transform: scale(0.96);
+        }
+
+        .pin-error {
+            color: #e0352b;
+            font-size: 12px;
+            margin-top: 10px;
+            min-height: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1>🚌 運行履歴（園用）</h1>
+            <div class="status" id="statusText">認証中...</div>
+        </div>
+        <button class="menu-button" id="menuButton" aria-label="メニュー">☰</button>
+    </div>
+
+    <div class="map-container">
+        <div id="map"></div>
+        <div class="drawer-backdrop" id="drawerBackdrop"></div>
+        <div class="side-stack" id="sideStack">
+            <div class="glass-panel">
+                <div class="panel-title">号車を選択</div>
+                <div class="bus-chips" id="busChips">
+                    <div class="empty-note">読み込み中...</div>
+                </div>
+            </div>
+            <div class="glass-panel">
+                <div class="panel-title">運行履歴（直近7日）</div>
+                <div class="session-list" id="sessionList">
+                    <div class="empty-note">号車を選択してください</div>
+                </div>
+                <button class="danger-button hidden" id="deleteBusButton">🗑 この号車のデータを全て削除</button>
+            </div>
+            <button class="reload-button" id="reloadButton">🔄 データを再読み込み</button>
+        </div>
+    </div>
+
+    <!-- 暗証番号ゲート -->
+    <div class="pin-gate" id="pinGate">
+        <div class="pin-card">
+            <h2>🔒 園用の管理画面</h2>
+            <input type="password" class="pin-input" id="pinInput" placeholder="暗証番号" inputmode="numeric" autocomplete="off">
+            <button class="pin-submit" id="pinSubmit">開く</button>
+            <div class="pin-error" id="pinError"></div>
+        </div>
+    </div>
+
+    <script>
+        let map;
+
+        function initMap() {
+            // 幼稚園（さいたま市岩槻区宮町1-6-20）付近
+            map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 14,
+                center: { lat: 35.9580, lng: 139.6992 },
+                mapTypeControl: false,
+                streetViewControl: false,
+                fullscreenControl: false,
+            });
+        }
+
+        // ドロワー（スマホ時のメニュー）の開閉
+        function setDrawer(open) {
+            document.getElementById('sideStack').classList.toggle('open', open);
+            document.getElementById('drawerBackdrop').classList.toggle('open', open);
+        }
+
+        document.getElementById('menuButton').addEventListener('click', () => {
+            setDrawer(!document.getElementById('sideStack').classList.contains('open'));
+        });
+
+        document.getElementById('drawerBackdrop').addEventListener('click', () => setDrawer(false));
+    </script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+        import { getDatabase, ref, get, remove } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+
+        // 画面を開く暗証番号。運転手ページのPINと合わせて園で決めた番号に変更してください
+        const ADMIN_PIN = '0000';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBDbScn1FCiedXrE3BoORjw1KRPP6Rbw9s",
+            authDomain: "realtimebus-e46a1.firebaseapp.com",
+            databaseURL: "https://realtimebus-e46a1-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "realtimebus-e46a1",
+            storageBucket: "realtimebus-e46a1.firebasestorage.app",
+            messagingSenderId: "508497237681",
+            appId: "1:508497237681:web:a9d898ca4ac098f1133490"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        const auth = getAuth(app);
+
+        let busesData = {};
+        let selectedBusId = null;
+        let selectedSessionId = null;
+        let historyPolyline = null;
+        let startMarker = null;
+        let endMarker = null;
+
+        // ========================================
+        // 暗証番号ゲート（簡易・クライアント側のみ）
+        // ========================================
+        function unlock() {
+            document.getElementById('pinGate').classList.add('hidden');
+        }
+
+        if (sessionStorage.getItem('adminUnlocked') === 'yes') {
+            unlock();
+        }
+
+        document.getElementById('pinSubmit').addEventListener('click', () => {
+            if (document.getElementById('pinInput').value === ADMIN_PIN) {
+                sessionStorage.setItem('adminUnlocked', 'yes');
+                unlock();
+            } else {
+                document.getElementById('pinError').textContent = '暗証番号が正しくありません';
+            }
+        });
+
+        document.getElementById('pinInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') document.getElementById('pinSubmit').click();
+        });
+
+        // ========================================
+        // データ読み込み
+        // ========================================
+        function escapeHtml(str) {
+            return String(str).replace(/[&<>"']/g, (ch) => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[ch]));
+        }
+
+        async function loadData() {
+            document.getElementById('statusText').textContent = '読み込み中...';
+            const snap = await get(ref(database, 'buses'));
+            busesData = snap.val() || {};
+            renderBusChips();
+            if (selectedBusId && busesData[selectedBusId]) {
+                renderSessionList(selectedBusId);
+            }
+            document.getElementById('statusText').textContent =
+                '更新: ' + new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function renderBusChips() {
+            const el = document.getElementById('busChips');
+            const busIds = Object.keys(busesData);
+            if (busIds.length === 0) {
+                el.innerHTML = '<div class="empty-note">データがありません</div>';
+                return;
+            }
+            el.innerHTML = busIds.map((busId) => {
+                const label = escapeHtml(busesData[busId].busNumber ?? busId);
+                const selected = busId === selectedBusId ? ' selected' : '';
+                return `<button class="bus-chip${selected}" data-bus-id="${escapeHtml(busId)}">${label}号車</button>`;
+            }).join('');
+        }
+
+        document.getElementById('busChips').addEventListener('click', (event) => {
+            const chip = event.target.closest('.bus-chip');
+            if (!chip) return;
+            selectedBusId = chip.dataset.busId;
+            selectedSessionId = null;
+            renderBusChips();
+            renderSessionList(selectedBusId);
+        });
+
+        // ========================================
+        // 運行履歴（セッション）一覧
+        // ========================================
+        function sessionSummary(sessionId, session) {
+            const points = Object.values(session.path || {}).sort((a, b) => a.timestamp - b.timestamp);
+            const start = points.length ? points[0].timestamp : Number(sessionId);
+            const end = points.length ? points[points.length - 1].timestamp : start;
+            return { points, start, end };
+        }
+
+        function renderSessionList(busId) {
+            const el = document.getElementById('sessionList');
+            const sessions = (busesData[busId] && busesData[busId].sessions) || {};
+            const ids = Object.keys(sessions).sort((a, b) => Number(b) - Number(a));
+
+            if (ids.length === 0) {
+                el.innerHTML = '<div class="empty-note">この号車の履歴はありません</div>';
+                document.getElementById('deleteBusButton').classList.remove('hidden');
+                return;
+            }
+
+            el.innerHTML = ids.map((sessionId) => {
+                const { points, start, end } = sessionSummary(sessionId, sessions[sessionId]);
+                const d = new Date(start);
+                const dateStr = `${d.getMonth() + 1}/${d.getDate()}（${'日月火水木金土'[d.getDay()]}）`;
+                const timeStr = new Date(start).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })
+                    + '〜' + new Date(end).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+                const minutes = Math.max(1, Math.round((end - start) / 60000));
+                const selected = sessionId === selectedSessionId ? ' selected' : '';
+                return `<div class="session-item${selected}" data-session-id="${sessionId}">
+                    <div>
+                        <div class="session-date">${dateStr} ${timeStr}</div>
+                        <div class="session-meta">約${minutes}分 · ${points.length}地点</div>
+                    </div>
+                    <button class="session-delete" data-session-id="${sessionId}" title="この履歴を削除">🗑</button>
+                </div>`;
+            }).join('');
+
+            document.getElementById('deleteBusButton').classList.remove('hidden');
+        }
+
+        document.getElementById('sessionList').addEventListener('click', async (event) => {
+            if (!selectedBusId) return;
+
+            // 個別履歴の削除
+            const deleteButton = event.target.closest('.session-delete');
+            if (deleteButton) {
+                const sessionId = deleteButton.dataset.sessionId;
+                const d = new Date(Number(sessionId));
+                const label = `${d.getMonth() + 1}/${d.getDate()} ${d.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}`;
+                if (!confirm(`${label} の運行履歴を削除しますか？`)) return;
+                try {
+                    await remove(ref(database, `buses/${selectedBusId}/sessions/${sessionId}`));
+                    delete busesData[selectedBusId].sessions[sessionId];
+                    if (selectedSessionId === sessionId) {
+                        selectedSessionId = null;
+                        clearDrawing();
+                    }
+                    renderSessionList(selectedBusId);
+                } catch (error) {
+                    console.error('履歴の削除に失敗:', error);
+                    alert('削除に失敗しました。通信環境を確認してください。');
+                }
+                return;
+            }
+
+            const item = event.target.closest('.session-item');
+            if (!item) return;
+            selectedSessionId = item.dataset.sessionId;
+            renderSessionList(selectedBusId);
+            drawSession(selectedBusId, selectedSessionId);
+            // スマホでは軌跡が見えるようドロワーを閉じる（PCでは何も起きない）
+            setDrawer(false);
+        });
+
+        // 号車データの丸ごと削除（使われていない号車の掃除用）
+        document.getElementById('deleteBusButton').addEventListener('click', async () => {
+            if (!selectedBusId) return;
+            const label = busesData[selectedBusId]?.busNumber ?? selectedBusId;
+            if (!confirm(`「${label}号車」のデータ（履歴・現在位置・連絡）を全て削除しますか？\nこの操作は取り消せません。`)) return;
+            try {
+                await remove(ref(database, `buses/${selectedBusId}`));
+                delete busesData[selectedBusId];
+                selectedBusId = null;
+                selectedSessionId = null;
+                clearDrawing();
+                renderBusChips();
+                document.getElementById('sessionList').innerHTML = '<div class="empty-note">号車を選択してください</div>';
+                document.getElementById('deleteBusButton').classList.add('hidden');
+            } catch (error) {
+                console.error('号車データの削除に失敗:', error);
+                alert('削除に失敗しました。通信環境を確認してください。');
+            }
+        });
+
+        // ========================================
+        // 軌跡の描画
+        // ========================================
+        function clearDrawing() {
+            if (historyPolyline) { historyPolyline.setMap(null); historyPolyline = null; }
+            if (startMarker) { startMarker.setMap(null); startMarker = null; }
+            if (endMarker) { endMarker.setMap(null); endMarker = null; }
+        }
+
+        function drawSession(busId, sessionId) {
+            if (!map || typeof google === 'undefined') return;
+            const session = busesData[busId]?.sessions?.[sessionId];
+            if (!session) return;
+
+            const { points } = sessionSummary(sessionId, session);
+            if (points.length === 0) return;
+
+            clearDrawing();
+
+            const path = points.map((p) => ({ lat: p.lat, lng: p.lng }));
+            historyPolyline = new google.maps.Polyline({
+                map: map,
+                path: path,
+                strokeColor: '#ff6b9d',
+                strokeOpacity: 0.85,
+                strokeWeight: 4,
+            });
+
+            const markerIcon = (color) => ({
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 9,
+                fillColor: color,
+                fillOpacity: 1,
+                strokeColor: 'white',
+                strokeWeight: 2,
+            });
+            startMarker = new google.maps.Marker({
+                map: map, position: path[0], icon: markerIcon('#34c759'), title: '出発'
+            });
+            endMarker = new google.maps.Marker({
+                map: map, position: path[path.length - 1], icon: markerIcon('#ff3b30'), title: '終了'
+            });
+
+            const bounds = new google.maps.LatLngBounds();
+            path.forEach((p) => bounds.extend(p));
+            map.fitBounds(bounds, 60);
+        }
+
+        // ========================================
+        // 初期化
+        // ========================================
+        document.getElementById('reloadButton').addEventListener('click', () => {
+            loadData().catch((error) => {
+                console.error('再読み込みに失敗:', error);
+                document.getElementById('statusText').textContent = '読み込みに失敗しました';
+            });
+        });
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                loadData().catch((error) => {
+                    console.error('読み込みに失敗:', error);
+                    document.getElementById('statusText').textContent = '読み込みに失敗しました';
+                });
+            }
+        });
+
+        signInAnonymously(auth).catch((error) => {
+            console.error('認証に失敗:', error);
+            document.getElementById('statusText').textContent = '認証に失敗しました';
+        });
+    </script>
+
+    <!-- Google Maps APIの読み込み -->
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBKHPhToo8HfzoQ4QYgCZ5HQtlyu_u7r70&callback=initMap&language=ja">
+    </script>
+</body>
+</html>

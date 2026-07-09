@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#4CAF50">
+    <meta name="theme-color" content="#ff6b9d">
+    <link rel="manifest" href="manifest.json">
     <title>幼稚園バス管理 - 運行モード</title>
     <style>
         * {
@@ -13,8 +14,9 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Segoe UI', sans-serif;
-            background: #fff5f8;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', 'Segoe UI', sans-serif;
+            background: #f5f5f7;
+            color: #1d1d1f;
             height: 100vh;
             display: flex;
             flex-direction: column;
@@ -22,13 +24,15 @@
         }
 
         .header {
-            background: linear-gradient(135deg, #ff9bb7 0%, #ff6b9d 100%);
-            color: white;
-            padding: 8px 15px;
-            box-shadow: 0 2px 8px rgba(255, 107, 157, 0.3);
+            background: linear-gradient(135deg, #ff8fb3 0%, #ff5c93 100%);
+            color: #ffffff;
+            padding: 10px 16px;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            box-shadow: 0 4px 24px rgba(255, 107, 157, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+            position: relative;
+            z-index: 1100;
         }
 
         .header-content {
@@ -67,12 +71,13 @@
             font-size: 15px;
             margin: 0;
             font-weight: 600;
+            letter-spacing: -0.2px;
             line-height: 1.2;
         }
 
         .header .status {
             font-size: 11px;
-            opacity: 0.9;
+            color: rgba(255, 255, 255, 0.85);
             margin-top: 1px;
         }
 
@@ -97,17 +102,24 @@
             gap: 10px;
         }
 
+        /* 運行情報は左下に置き、右上は操作ボタンだけにする */
+        .info-dock {
+            position: absolute;
+            left: 15px;
+            bottom: 24px;
+            z-index: 1000;
+        }
+
         .start-button {
-            width: 80px;
-            height: 80px;
+            width: 84px;
+            height: 84px;
             border-radius: 50%;
-            border: none;
+            border: 1px solid rgba(255, 255, 255, 0.55);
             font-size: 12px;
             font-weight: 600;
             color: white;
             cursor: pointer;
-            box-shadow: 0 4px 15px rgba(255, 107, 157, 0.4);
-            transition: all 0.3s;
+            transition: transform 0.2s, box-shadow 0.3s;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -116,46 +128,88 @@
         }
 
         .start-button.stopped {
-            background: linear-gradient(135deg, #ff9bb7 0%, #ff6b9d 100%);
+            background: linear-gradient(145deg, rgba(255, 155, 183, 0.95) 0%, rgba(255, 77, 136, 0.95) 100%);
+            box-shadow: 0 10px 30px rgba(255, 107, 157, 0.45),
+                        inset 0 2px 4px rgba(255, 255, 255, 0.55),
+                        inset 0 -8px 14px rgba(255, 255, 255, 0.12);
         }
 
         .start-button.running {
-            background: linear-gradient(135deg, #f44336 0%, #da190b 100%);
+            background: linear-gradient(145deg, rgba(255, 111, 97, 0.95) 0%, rgba(224, 53, 43, 0.95) 100%);
+            box-shadow: 0 10px 30px rgba(255, 59, 48, 0.4),
+                        inset 0 2px 4px rgba(255, 255, 255, 0.5),
+                        inset 0 -8px 14px rgba(255, 255, 255, 0.1);
         }
 
         .start-button:active {
-            transform: scale(0.95);
-        }
-
-        .start-button .icon {
-            font-size: 24px;
-            line-height: 1;
-        }
-            background: linear-gradient(135deg, #ff9bb7 0%, #ff6b9d 100%);
-        }
-
-        .start-button.running {
-            background: linear-gradient(135deg, #ff6b9d 0%, #f44336 100%);
-        }
-
-        .start-button:active {
-            transform: scale(0.95);
-            box-shadow: 0 4px 20px rgba(255, 107, 157, 0.5);
+            transform: scale(0.93);
         }
 
         .start-button .icon {
             font-size: 32px;
+            line-height: 1;
+        }
+
+        .notice-button {
+            padding: 11px 20px;
+            border: 1px solid rgba(255, 255, 255, 0.65);
+            border-radius: 9999px;
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0.48) 100%);
+            backdrop-filter: blur(24px) saturate(200%);
+            -webkit-backdrop-filter: blur(24px) saturate(200%);
+            font-size: 14px;
+            font-weight: 600;
+            color: #1d1d1f;
+            box-shadow: 0 8px 24px rgba(255, 107, 157, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .notice-button:active {
+            transform: scale(0.95);
+        }
+
+        .notice-options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .notice-option {
+            padding: 13px;
+            border: 1px solid rgba(255, 255, 255, 0.85);
+            border-radius: 20px;
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.68) 100%);
+            font-size: 17px;
+            font-weight: 600;
+            letter-spacing: -0.2px;
+            color: #1d1d1f;
+            box-shadow: 0 4px 14px rgba(255, 107, 157, 0.12), inset 0 1px 0 rgba(255, 255, 255, 1);
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s;
+        }
+
+        .notice-option:active {
+            transform: scale(0.97);
+            background: rgba(255, 240, 245, 0.9);
+        }
+
+        .notice-option.clear {
+            color: #7a7a7a;
+            font-weight: 400;
         }
 
         .info-panel {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0.48) 100%);
+            backdrop-filter: blur(24px) saturate(200%);
+            -webkit-backdrop-filter: blur(24px) saturate(200%);
             padding: 8px 12px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(255, 107, 157, 0.15);
+            border-radius: 22px;
             min-width: 150px;
             font-size: 12px;
-            border: 1px solid rgba(255, 155, 183, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.65);
+            box-shadow: 0 8px 32px rgba(255, 107, 157, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.9);
             transition: all 0.3s;
             cursor: pointer;
         }
@@ -199,7 +253,7 @@
             justify-content: space-between;
             align-items: center;
             padding: 5px 0;
-            border-bottom: 1px solid rgba(255, 155, 183, 0.1);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
             gap: 12px;
         }
 
@@ -208,16 +262,16 @@
         }
 
         .info-label {
-            color: #888;
+            color: #7a7a7a;
             font-size: 11px;
-            font-weight: 500;
+            font-weight: 400;
             white-space: nowrap;
         }
 
         .info-value {
             font-weight: 600;
             font-size: 12px;
-            color: #ff6b9d;
+            color: #1d1d1f;
             text-align: right;
         }
 
@@ -241,20 +295,24 @@
         }
 
         .modal-content {
-            background: white;
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.74) 100%);
+            backdrop-filter: blur(30px) saturate(200%);
+            -webkit-backdrop-filter: blur(30px) saturate(200%);
+            border: 1px solid rgba(255, 255, 255, 0.75);
             border-radius: 28px;
-            padding: 30px;
+            padding: 24px;
             max-width: 400px;
             width: 90%;
-            box-shadow: 0 20px 60px rgba(255, 107, 157, 0.3);
+            box-shadow: 0 24px 60px rgba(255, 107, 157, 0.3), inset 0 1px 0 rgba(255, 255, 255, 1);
         }
 
         .modal-title {
-            font-size: 24px;
+            font-size: 21px;
             font-weight: 600;
+            letter-spacing: -0.2px;
             text-align: center;
             margin-bottom: 20px;
-            color: #333;
+            color: #1d1d1f;
         }
 
         .bus-selection {
@@ -266,50 +324,56 @@
 
         .bus-button {
             padding: 20px;
-            border: 2px solid rgba(255, 155, 183, 0.3);
-            border-radius: 18px;
-            background: white;
-            font-size: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.85);
+            border-radius: 20px;
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.68) 100%);
+            font-size: 17px;
             font-weight: 600;
+            letter-spacing: -0.2px;
+            box-shadow: 0 4px 14px rgba(255, 107, 157, 0.12), inset 0 1px 0 rgba(255, 255, 255, 1);
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 10px;
-            color: #333;
+            color: #1d1d1f;
         }
 
         .bus-button:hover {
-            border-color: #ff9bb7;
-            background: #fef5f8;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(255, 155, 183, 0.2);
+            background: rgba(255, 255, 255, 0.98);
+        }
+
+        .bus-button:active {
+            transform: scale(0.97);
         }
 
         .bus-button.selected {
-            border-color: #ff6b9d;
-            background: linear-gradient(135deg, #ff9bb7 0%, #ff6b9d 100%);
-            color: white;
-            transform: scale(1.05);
-            box-shadow: 0 8px 20px rgba(255, 107, 157, 0.3);
+            border-color: rgba(255, 107, 157, 0.9);
+            box-shadow: 0 0 0 2px rgba(255, 107, 157, 0.85),
+                        0 6px 20px rgba(255, 107, 157, 0.35),
+                        inset 0 1px 0 rgba(255, 255, 255, 1);
+            background: linear-gradient(160deg, #ffffff 0%, #fff0f5 100%);
+            color: #1d1d1f;
         }
 
         .custom-bus-input {
             width: 100%;
-            padding: 15px;
-            border: 2px solid rgba(255, 155, 183, 0.3);
-            border-radius: 14px;
-            font-size: 16px;
+            padding: 12px 20px;
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            border-radius: 9999px;
+            font-size: 17px;
             margin-bottom: 20px;
-            transition: all 0.3s;
-            background: white;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            background: rgba(255, 255, 255, 0.75);
+            box-shadow: inset 0 2px 6px rgba(31, 38, 135, 0.06);
+            color: #1d1d1f;
         }
 
         .custom-bus-input:focus {
             outline: none;
-            border-color: #ff6b9d;
-            box-shadow: 0 0 0 4px rgba(255, 107, 157, 0.1);
+            border-color: rgba(255, 107, 157, 0.8);
+            box-shadow: 0 0 0 3px rgba(255, 107, 157, 0.18), inset 0 2px 6px rgba(31, 38, 135, 0.06);
         }
 
         .modal-buttons {
@@ -319,33 +383,36 @@
 
         .modal-button {
             flex: 1;
-            padding: 15px;
+            padding: 12px 22px;
             border: none;
-            border-radius: 14px;
-            font-size: 16px;
-            font-weight: 600;
+            border-radius: 9999px;
+            font-size: 17px;
+            font-weight: 400;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform 0.2s, background-color 0.2s;
         }
 
         .modal-button.cancel {
-            background: #f0f0f0;
-            color: #666;
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 1);
+            color: #1d1d1f;
         }
 
         .modal-button.cancel:active {
-            background: #e0e0e0;
+            background: rgba(235, 235, 240, 0.9);
+            transform: scale(0.95);
         }
 
         .modal-button.confirm {
-            background: linear-gradient(135deg, #ff9bb7 0%, #ff6b9d 100%);
-            color: white;
-            box-shadow: 0 4px 12px rgba(255, 107, 157, 0.3);
+            background: linear-gradient(145deg, #ff8fb3 0%, #ff4d88 100%);
+            border: 1px solid rgba(255, 255, 255, 0.45);
+            box-shadow: 0 8px 20px rgba(255, 107, 157, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+            color: #ffffff;
         }
 
         .modal-button.confirm:active {
-            transform: scale(0.98);
-            box-shadow: 0 2px 8px rgba(255, 107, 157, 0.3);
+            transform: scale(0.95);
         }
 
         .loading {
@@ -353,10 +420,13 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: white;
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.72) 100%);
+            backdrop-filter: blur(24px) saturate(200%);
+            -webkit-backdrop-filter: blur(24px) saturate(200%);
             padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(255, 107, 157, 0.2);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.75);
+            box-shadow: 0 16px 48px rgba(255, 107, 157, 0.25), inset 0 1px 0 rgba(255, 255, 255, 1);
             z-index: 2000;
             text-align: center;
         }
@@ -366,7 +436,7 @@
         }
 
         .spinner {
-            border: 4px solid #fef5f8;
+            border: 4px solid #f0f0f0;
             border-top: 4px solid #ff6b9d;
             border-radius: 50%;
             width: 40px;
@@ -385,16 +455,19 @@
             top: 60px;
             left: 50%;
             transform: translateX(-50%);
-            background: #f44336;
+            background: linear-gradient(145deg, rgba(255, 90, 82, 0.95) 0%, rgba(224, 53, 43, 0.95) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            box-shadow: 0 10px 30px rgba(224, 53, 43, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.4);
             color: white;
             padding: 12px 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            border-radius: 16px;
             z-index: 2000;
             display: none;
             max-width: 90%;
-            font-size: 13px;
-            font-weight: 500;
+            font-size: 14px;
+            font-weight: 400;
         }
 
         .notification.show {
@@ -403,8 +476,8 @@
         }
 
         .notification.success {
-            background: linear-gradient(135deg, #ff9bb7 0%, #ff6b9d 100%);
-            box-shadow: 0 8px 30px rgba(255, 107, 157, 0.3);
+            background: linear-gradient(145deg, rgba(255, 143, 179, 0.95) 0%, rgba(255, 77, 136, 0.95) 100%);
+            box-shadow: 0 10px 30px rgba(255, 107, 157, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.45);
         }
 
         @keyframes slideDown {
@@ -419,14 +492,15 @@
         }
 
         .bus-badge {
-            background: linear-gradient(135deg, #ff9bb7 0%, #ff6b9d 100%);
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.12) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.55);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
             color: white;
             padding: 4px 12px;
-            border-radius: 12px;
+            border-radius: 9999px;
             font-size: 11px;
             font-weight: 600;
             display: inline-block;
-            box-shadow: 0 2px 8px rgba(255, 107, 157, 0.3);
         }
     </style>
 </head>
@@ -452,7 +526,11 @@
                 <div class="icon">▶️</div>
                 <div>運行開始</div>
             </button>
-            
+
+            <button id="noticeButton" class="notice-button" style="display: none;">📢 連絡</button>
+        </div>
+
+        <div class="info-dock">
             <div class="info-panel collapsed" id="infoPanel">
                 <div class="info-panel-header">
                     <div class="info-item" style="border: none; padding: 0;">
@@ -469,6 +547,10 @@
                     <div class="info-item">
                         <span class="info-label">精度</span>
                         <span class="info-value" id="accuracy">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">連絡</span>
+                        <span class="info-value" id="noticeStatus">なし</span>
                     </div>
                 </div>
             </div>
@@ -492,9 +574,9 @@
                     <span style="font-size: 30px;">🚌</span>
                     <span>3号車</span>
                 </button>
-                <button class="bus-button" data-bus="4">
+                <button class="bus-button" data-bus="6">
                     <span style="font-size: 30px;">🚌</span>
-                    <span>4号車</span>
+                    <span>6号車</span>
                 </button>
             </div>
             <input type="text" class="custom-bus-input" id="customBusInput" placeholder="その他の号車名を入力 (例: 5号車)">
@@ -502,6 +584,25 @@
             <div class="modal-buttons">
                 <button class="modal-button cancel" id="cancelButton">キャンセル</button>
                 <button class="modal-button confirm" id="confirmButton">決定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 保護者への連絡モーダル -->
+    <div class="modal hidden" id="noticeModal">
+        <div class="modal-content">
+            <div class="modal-title">📢 保護者への連絡</div>
+            <div class="notice-options">
+                <button class="notice-option" data-message="園を出発しました">園を出発しました</button>
+                <button class="notice-option" data-message="園に到着しました">園に到着しました</button>
+                <button class="notice-option" data-message="渋滞のため遅れています">渋滞のため遅れています</button>
+                <button class="notice-option" data-message="約5分遅れています">約5分遅れています</button>
+                <button class="notice-option" data-message="約10分遅れています">約10分遅れています</button>
+                <button class="notice-option" data-message="15分以上遅れています">15分以上遅れています</button>
+                <button class="notice-option clear" data-message="">連絡を取り消す</button>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-button cancel" id="noticeCancelButton">キャンセル</button>
             </div>
         </div>
     </div>
@@ -540,7 +641,8 @@
         // 地図の初期化（Google Mapsから呼ばれる）
         // ========================================
         function initMap() {
-            const defaultCenter = { lat: 35.6812, lng: 139.7671 };
+            // 幼稚園（さいたま市岩槻区宮町1-6-20）付近
+            const defaultCenter = { lat: 35.9580, lng: 139.6992 };
             
             map = new google.maps.Map(document.getElementById('map'), {
                 zoom: 15,
@@ -672,7 +774,7 @@
         // Firebase SDK のインポート
         // ========================================
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-        import { getDatabase, ref, set, update, push, runTransaction, onDisconnect } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+        import { getDatabase, ref, set, update, push, runTransaction, onDisconnect, onValue, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
 
         // ========================================
@@ -691,6 +793,10 @@
 
         // 運行開始の暗証番号。園で決めた番号に変更してください
         const OPERATOR_PIN = '0000';
+
+        // isActive が残留していても、最終更新がこの時間より古ければ
+        // 異常終了とみなして同じ号車での運行再開を許可する
+        const STALE_TAKEOVER_MS = 2 * 60 * 1000;
 
         // Firebaseの初期化
         let app;
@@ -713,6 +819,26 @@
             console.error('Firebase initialization error:', error);
             alert('Firebaseの初期化に失敗しました。設定を確認してください。');
         };
+
+        // ========================================
+        // 再接続時の復元
+        // 一時的な通信断で onDisconnect が発火して isActive=false に
+        // なった場合、再接続時に運行中状態を書き戻す
+        // ========================================
+        if (window.database) {
+            onValue(ref(window.database, '.info/connected'), (snap) => {
+                if (snap.val() !== true || !isTracking || !currentBusId) return;
+
+                const busRef = ref(window.database, `buses/${currentBusId}`);
+                update(busRef, {
+                    isActive: true,
+                    lastUpdate: Date.now(),
+                    currentSessionId: currentSessionId
+                }).catch((error) => console.error('再接続時の状態復元に失敗:', error));
+                onDisconnect(busRef).update({ isActive: false, endTime: serverTimestamp() })
+                    .catch((error) => console.error('onDisconnectの再登録に失敗:', error));
+            });
+        }
 
         // ========================================
         // 号車選択モーダル
@@ -753,7 +879,9 @@
                 }
                 showBusSelectionModal();
             } else {
-                stopTracking();
+                if (confirm('運行を終了しますか？')) {
+                    stopTracking();
+                }
             }
         });
 
@@ -811,7 +939,11 @@
             try {
                 result = await runTransaction(busRef, (current) => {
                     if (current && current.isActive) {
-                        return; // 中断（既に運行中）
+                        const last = current.lastUpdate || 0;
+                        if (Date.now() - last < STALE_TAKEOVER_MS) {
+                            return; // 中断（本当に運行中）
+                        }
+                        // 更新が長時間止まっている＝異常終了の残留データとみなして再開を許可
                     }
                     return {
                         ...current,
@@ -819,7 +951,8 @@
                         isActive: true,
                         startTime: Date.now(),
                         lastUpdate: Date.now(),
-                        currentSessionId: sessionId
+                        currentSessionId: sessionId,
+                        notice: null
                     };
                 });
             } catch (error) {
@@ -834,7 +967,8 @@
             }
 
             // アプリが強制終了・切断された場合に自動で運行終了扱いにする
-            onDisconnect(busRef).update({ isActive: false, endTime: Date.now() });
+            onDisconnect(busRef).update({ isActive: false, endTime: serverTimestamp() })
+                .catch((error) => console.error('onDisconnectの登録に失敗:', error));
 
             isTracking = true;
             startTime = Date.now();
@@ -854,6 +988,8 @@
 
             document.getElementById('statusText').textContent = '運行中';
             document.getElementById('busBadge').innerHTML = `<span class="bus-badge">${busNumber}号車</span>`;
+            document.getElementById('noticeButton').style.display = 'block';
+            document.getElementById('noticeStatus').textContent = 'なし';
 
             // マーカーに号車番号を表示
             marker.setLabel({
@@ -904,7 +1040,8 @@
                     await onDisconnect(busRef).cancel();
                     await update(busRef, {
                         isActive: false,
-                        endTime: Date.now()
+                        endTime: Date.now(),
+                        notice: null
                     });
                 } catch (error) {
                     console.error('運行終了の記録に失敗:', error);
@@ -922,6 +1059,8 @@
 
             document.getElementById('statusText').textContent = '待機中';
             document.getElementById('busBadge').innerHTML = '';
+            document.getElementById('noticeButton').style.display = 'none';
+            document.getElementById('noticeStatus').textContent = 'なし';
 
             // マーカーのラベルをクリア
             marker.setLabel(null);
@@ -992,13 +1131,16 @@
                 });
                 await update(ref(window.database, `buses/${currentBusId}`), { lastUpdate: now });
 
-                // パスは運行セッションごとに分けて保存（過去分と混ざらないように）
-                const pathRef = ref(window.database, `buses/${currentBusId}/sessions/${currentSessionId}/path`);
-                await push(pathRef, {
-                    lat: pos.lat,
-                    lng: pos.lng,
-                    timestamp: now
-                });
+                // パスは運行セッションごとに分けて保存（過去分と混ざらないように）。
+                // 停車中の肥大化を防ぐため、一定距離以上動いたときだけ追加する
+                if (movedEnough) {
+                    const pathRef = ref(window.database, `buses/${currentBusId}/sessions/${currentSessionId}/path`);
+                    await push(pathRef, {
+                        lat: pos.lat,
+                        lng: pos.lng,
+                        timestamp: now
+                    });
+                }
 
                 lastWrittenPos = pos;
                 lastWriteTime = now;
@@ -1040,6 +1182,49 @@
             if (isTracking && document.visibilityState === 'visible') {
                 await requestWakeLock();
             }
+        });
+
+        // ========================================
+        // 遅延連絡（運行中のみ。プリセットをタップで即送信）
+        // ========================================
+        document.getElementById('noticeButton').addEventListener('click', function() {
+            if (!isTracking) return;
+            document.getElementById('noticeModal').classList.remove('hidden');
+        });
+
+        document.getElementById('noticeCancelButton').addEventListener('click', function() {
+            document.getElementById('noticeModal').classList.add('hidden');
+        });
+
+        document.querySelectorAll('.notice-option').forEach((button) => {
+            button.addEventListener('click', async function() {
+                document.getElementById('noticeModal').classList.add('hidden');
+                if (!window.database || !currentBusId) return;
+
+                const message = this.dataset.message;
+                const busRef = ref(window.database, `buses/${currentBusId}`);
+                try {
+                    if (message) {
+                        await update(busRef, {
+                            notice: { message: message, timestamp: Date.now() }
+                        });
+                        // 当日の連絡履歴（保護者ページの「今日の連絡」欄用）
+                        await push(ref(window.database, `buses/${currentBusId}/noticeLog`), {
+                            message: message,
+                            timestamp: Date.now()
+                        });
+                        document.getElementById('noticeStatus').textContent = message;
+                        showNotification(`保護者へ連絡しました: ${message}`, 'success');
+                    } else {
+                        await update(busRef, { notice: null });
+                        document.getElementById('noticeStatus').textContent = 'なし';
+                        showNotification('遅れの連絡を取り消しました', 'success');
+                    }
+                } catch (error) {
+                    console.error('遅延連絡の送信に失敗:', error);
+                    showNotification('連絡の送信に失敗しました（通信環境を確認してください）', 'error');
+                }
+            });
         });
 
         // ========================================
