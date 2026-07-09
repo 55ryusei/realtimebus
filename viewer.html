@@ -18,40 +18,36 @@
             background: #f5f5f7;
             color: #1d1d1f;
             height: 100vh;
+            height: 100dvh;
             display: flex;
             flex-direction: column;
             overflow: hidden;
         }
 
-        .header {
-            background: linear-gradient(135deg, #ff8fb3 0%, #ff5c93 100%);
-            color: #ffffff;
-            padding: 10px 16px;
+        /* 左上のフローティングロゴ（旧ヘッダーの代わり） */
+        .logo-chip {
+            position: absolute;
+            top: calc(14px + env(safe-area-inset-top));
+            left: 14px;
+            z-index: 1200;
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 4px 24px rgba(255, 107, 157, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35);
-            position: relative;
-            z-index: 1100;
-        }
-
-        .header-content {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex: 1;
+            padding: 0;
+            border-radius: 9999px;
+            border: 1px solid rgba(255, 255, 255, 0.65);
+            box-shadow: 0 8px 24px rgba(255, 107, 157, 0.22);
         }
 
         .logo {
-            width: 36px;
-            height: 36px;
+            width: 44px;
+            height: 44px;
             background: white;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             overflow: hidden;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+            flex: none;
         }
 
         .logo img {
@@ -61,40 +57,36 @@
             border-radius: 50%;
         }
 
-        .header-text {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-        }
-
-        .header h1 {
-            font-size: 15px;
-            margin: 0;
-            font-weight: 600;
-            letter-spacing: -0.2px;
-            line-height: 1.2;
-        }
-
-        .header .status {
+        .logo-chip .status {
             font-size: 11px;
-            color: rgba(255, 255, 255, 0.85);
-            margin-top: 1px;
+            font-weight: 600;
+            color: #7a7a7a;
+            white-space: nowrap;
         }
 
-        .menu-button {
-            flex: none;
-            width: 38px;
-            height: 38px;
+        /* 右上のフローティング設定ボタン */
+        .settings-button {
+            position: absolute;
+            top: calc(14px + env(safe-area-inset-top));
+            right: 14px;
+            z-index: 1200;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
-            border: 1px solid rgba(255, 255, 255, 0.55);
-            background: rgba(255, 255, 255, 0.25);
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
-            color: #ffffff;
-            font-size: 17px;
+            border: 1px solid rgba(255, 255, 255, 0.65);
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0.48) 100%);
+            backdrop-filter: blur(24px) saturate(200%);
+            -webkit-backdrop-filter: blur(24px) saturate(200%);
+            box-shadow: 0 8px 24px rgba(255, 107, 157, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            color: #1d1d1f;
+            font-size: 19px;
             line-height: 1;
             cursor: pointer;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            transition: transform 0.2s;
+        }
+
+        .settings-button:active {
+            transform: scale(0.93);
         }
 
         .drawer-backdrop {
@@ -109,20 +101,54 @@
             display: block;
         }
 
+        /* 連絡バナー: 緑=出発到着 / 赤=遅延 / 黄=通信障害（自動） */
         .notice-banner {
-            background: linear-gradient(135deg, rgba(255, 159, 10, 0.94) 0%, rgba(255, 120, 0, 0.94) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             color: #ffffff;
-            padding: 11px 16px;
+            padding: 10px 14px;
             font-size: 14px;
             font-weight: 600;
             letter-spacing: -0.2px;
             box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
         }
 
+        .notice-banner.info {
+            background: linear-gradient(135deg, rgba(72, 209, 111, 0.94) 0%, rgba(40, 167, 69, 0.94) 100%);
+        }
+
+        .notice-banner.delay {
+            background: linear-gradient(135deg, rgba(255, 90, 82, 0.94) 0%, rgba(224, 53, 43, 0.94) 100%);
+        }
+
+        .notice-banner.stale {
+            background: linear-gradient(135deg, rgba(255, 159, 10, 0.94) 0%, rgba(255, 120, 0, 0.94) 100%);
+        }
+
         .notice-banner + .notice-banner {
             border-top: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .notice-ok {
+            flex: none;
+            padding: 6px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 9999px;
+            background: rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.2s;
+        }
+
+        .notice-ok:active {
+            transform: scale(0.94);
+            background: rgba(255, 255, 255, 0.35);
         }
 
         .map-container {
@@ -146,24 +172,26 @@
             width: 200px;
         }
 
-        /* 画面下部の号車ステータスバー（常時表示・一目で状態がわかる） */
+        /* 画面下部の号車ステータスバー（常時表示・一目で状態がわかる）
+           4台までは1段、5台以上は自動で折り返して大きくなる */
         .bus-strip {
             position: absolute;
             left: 50%;
             transform: translateX(-50%);
-            bottom: 24px;
+            bottom: calc(20px + env(safe-area-inset-bottom));
             z-index: 1000;
             display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
             gap: 8px;
             padding: 8px;
-            border-radius: 9999px;
+            border-radius: 24px;
             background: linear-gradient(160deg, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0.48) 100%);
             backdrop-filter: blur(24px) saturate(200%);
             -webkit-backdrop-filter: blur(24px) saturate(200%);
             border: 1px solid rgba(255, 255, 255, 0.65);
             box-shadow: 0 8px 32px rgba(255, 107, 157, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.9);
             max-width: 94vw;
-            overflow-x: auto;
         }
 
         .bus-strip.hidden {
@@ -191,9 +219,72 @@
             transform: scale(0.95);
         }
 
+        /* チップの状態色: 緑=通常運行 / 黄=通信障害 / 赤=遅延中 / 灰=停止中 */
         .bus-strip-chip.status-active {
-            border-color: rgba(255, 107, 157, 0.7);
-            box-shadow: 0 0 12px rgba(255, 107, 157, 0.45), inset 0 1px 0 rgba(255, 255, 255, 1);
+            border-color: rgba(52, 199, 89, 0.7);
+            box-shadow: 0 0 12px rgba(52, 199, 89, 0.5), inset 0 1px 0 rgba(255, 255, 255, 1);
+        }
+
+        .bus-strip-chip.status-stale {
+            border-color: rgba(255, 149, 0, 0.75);
+            box-shadow: 0 0 12px rgba(255, 149, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 1);
+        }
+
+        .bus-strip-chip.status-delay {
+            border-color: rgba(255, 59, 48, 0.7);
+            box-shadow: 0 0 12px rgba(255, 59, 48, 0.5), inset 0 1px 0 rgba(255, 255, 255, 1);
+        }
+
+        /* 追跡中ピル（上段中央・ロゴ/設定ボタンと同じ列・タップで解除） */
+        .follow-pill {
+            position: absolute;
+            top: calc(14px + env(safe-area-inset-top));
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1150;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.65);
+            border-radius: 9999px;
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.82) 0%, rgba(255, 255, 255, 0.55) 100%);
+            backdrop-filter: blur(24px) saturate(200%);
+            -webkit-backdrop-filter: blur(24px) saturate(200%);
+            box-shadow: 0 8px 24px rgba(255, 107, 157, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            color: #1d1d1f;
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .follow-pill:active {
+            transform: translateX(-50%) scale(0.95);
+        }
+
+        .follow-pill.hidden {
+            display: none;
+        }
+
+        .follow-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            flex: none;
+            background: #ff4d88;
+            animation: pulse-pink 1.6s ease-in-out infinite;
+        }
+
+        .follow-x {
+            color: #7a7a7a;
+            margin-left: 2px;
+        }
+
+        @keyframes pulse-pink {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 77, 136, 0.55); }
+            50% { box-shadow: 0 0 0 6px rgba(255, 77, 136, 0); }
         }
 
         .status-dot {
@@ -204,7 +295,7 @@
         }
 
         .bus-strip-chip.status-active .status-dot {
-            background: #ff4d88;
+            background: #34c759;
             animation: pulse 1.6s ease-in-out infinite;
         }
 
@@ -212,13 +303,23 @@
             background: #ff9500;
         }
 
+        .bus-strip-chip.status-delay .status-dot {
+            background: #ff3b30;
+            animation: pulse-red 1.6s ease-in-out infinite;
+        }
+
         .bus-strip-chip.status-stopped .status-dot {
             background: #a0a0a6;
         }
 
         @keyframes pulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 77, 136, 0.55); }
-            50% { box-shadow: 0 0 0 6px rgba(255, 77, 136, 0); }
+            0%, 100% { box-shadow: 0 0 0 0 rgba(52, 199, 89, 0.55); }
+            50% { box-shadow: 0 0 0 6px rgba(52, 199, 89, 0); }
+        }
+
+        @keyframes pulse-red {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.55); }
+            50% { box-shadow: 0 0 0 6px rgba(255, 59, 48, 0); }
         }
 
         /* 号車詳細カード（チップ/マーカーのタップで下からせり出す） */
@@ -226,7 +327,9 @@
             position: absolute;
             left: 50%;
             transform: translateX(-50%) translateY(16px);
-            bottom: 88px;
+            bottom: calc(84px + env(safe-area-inset-bottom));
+            max-height: 42vh;
+            overflow-y: auto;
             width: min(360px, 92vw);
             z-index: 1500;
             background: linear-gradient(160deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
@@ -273,8 +376,9 @@
             color: #ffffff;
         }
 
-        .bus-card-status.status-active { background: linear-gradient(145deg, #ff8fb3 0%, #ff4d88 100%); }
+        .bus-card-status.status-active { background: linear-gradient(145deg, #48d16f 0%, #28a745 100%); }
         .bus-card-status.status-stale { background: linear-gradient(145deg, #ffb340 0%, #ff8c00 100%); }
+        .bus-card-status.status-delay { background: linear-gradient(145deg, #ff5a52 0%, #e0352b 100%); }
         .bus-card-status.status-stopped { background: linear-gradient(145deg, #9a9aa0 0%, #7c7c82 100%); }
 
         .bus-card-close {
@@ -306,12 +410,6 @@
             font-weight: 600;
         }
 
-        .bus-card-log {
-            margin-top: 4px;
-            max-height: 110px;
-            overflow-y: auto;
-        }
-
         .bus-card-push {
             width: 100%;
             margin-top: 10px;
@@ -338,6 +436,35 @@
             color: #1d1d1f;
         }
 
+        /* 現在地ボタン（左下） */
+        .locate-button {
+            position: absolute;
+            left: 14px;
+            bottom: calc(84px + env(safe-area-inset-bottom));
+            z-index: 1000;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.65);
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0.48) 100%);
+            backdrop-filter: blur(24px) saturate(200%);
+            -webkit-backdrop-filter: blur(24px) saturate(200%);
+            box-shadow: 0 8px 24px rgba(255, 107, 157, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            font-size: 18px;
+            line-height: 1;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .locate-button:active {
+            transform: scale(0.93);
+        }
+
+        .locate-button.on {
+            border-color: rgba(255, 107, 157, 0.7);
+            box-shadow: 0 0 12px rgba(255, 107, 157, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        }
+
         .push-panel {
             background: linear-gradient(160deg, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0.48) 100%);
             backdrop-filter: blur(24px) saturate(200%);
@@ -357,14 +484,23 @@
             width: 100%;
             padding: 10px 12px;
             border: 1px solid rgba(255, 255, 255, 0.45);
-            border-radius: 9999px;
+            border-radius: 18px;
             background: linear-gradient(145deg, #ff8fb3 0%, #ff4d88 100%);
             box-shadow: 0 8px 20px rgba(255, 107, 157, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.5);
             color: #ffffff;
             font-size: 13px;
             font-weight: 600;
+            line-height: 1.3;
             cursor: pointer;
             transition: transform 0.2s;
+        }
+
+        .push-toggle small {
+            display: block;
+            font-size: 10px;
+            font-weight: 400;
+            opacity: 0.85;
+            margin-top: 2px;
         }
 
         .push-toggle:active {
@@ -413,47 +549,6 @@
             line-height: 1.5;
         }
 
-        .log-panel {
-            background: linear-gradient(160deg, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0.48) 100%);
-            backdrop-filter: blur(24px) saturate(200%);
-            -webkit-backdrop-filter: blur(24px) saturate(200%);
-            border-radius: 22px;
-            border: 1px solid rgba(255, 255, 255, 0.65);
-            box-shadow: 0 8px 32px rgba(255, 107, 157, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.9);
-            padding: 8px 12px;
-            font-size: 12px;
-            max-height: 20vh;
-            overflow-y: auto;
-        }
-
-        .log-panel.hidden {
-            display: none;
-        }
-
-        .log-panel-title {
-            color: #7a7a7a;
-            font-size: 11px;
-            padding-bottom: 6px;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-            margin-bottom: 4px;
-        }
-
-        .log-item {
-            padding: 5px 0;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-            color: #1d1d1f;
-            line-height: 1.4;
-        }
-
-        .log-item:last-child {
-            border-bottom: none;
-        }
-
-        .log-item .log-time {
-            color: #7a7a7a;
-            font-size: 11px;
-            margin-right: 4px;
-        }
 
         .loading {
             position: fixed;
@@ -520,14 +615,29 @@
             to { transform: translateX(-50%) translateY(0); opacity: 1; }
         }
 
-        /* PCでは従来どおり右上に浮かせ、スマホではメニューから開くドロワーにする */
+        /* PCでは従来どおり右上に浮かせ、スマホでは設定ボタンから開くドロワーにする */
         @media (min-width: 768px) {
-            .menu-button {
+            .settings-button {
                 display: none;
             }
         }
 
         @media (max-width: 767px) {
+            .bus-strip-chip {
+                padding: 8px 10px;
+                font-size: 12px;
+                gap: 5px;
+            }
+
+            .bus-strip {
+                gap: 6px;
+            }
+
+            .status-dot {
+                width: 8px;
+                height: 8px;
+            }
+
             .side-stack {
                 position: fixed;
                 top: 0;
@@ -557,25 +667,22 @@
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="header-content">
-            <div class="logo">
-                <img src="logo.png" alt="ロゴ" onerror="this.parentElement.innerHTML='🚐'">
-            </div>
-            <div class="header-text">
-                <h1>幼稚園バス位置情報</h1>
-                <div class="status" id="statusText">認証中...</div>
-            </div>
-        </div>
-        <button class="menu-button" id="menuButton" aria-label="メニュー">☰</button>
-    </div>
-
     <div id="noticeBanners"></div>
 
     <div class="map-container">
         <div id="map"></div>
+        <div class="logo-chip">
+            <div class="logo">
+                <img src="logo.png" alt="ロゴ" onerror="this.parentElement.innerHTML='🚐'">
+            </div>
+            <!-- 接続状態はJSが参照するため要素は残すが表示しない -->
+            <span class="status" id="statusText" style="display: none;">認証中...</span>
+        </div>
+        <button class="settings-button" id="menuButton" aria-label="設定">⚙️</button>
+        <button class="locate-button" id="locateButton" aria-label="現在地を表示">📍</button>
         <div class="drawer-backdrop" id="drawerBackdrop"></div>
         <div class="bus-strip hidden" id="busStrip"></div>
+        <button class="follow-pill hidden" id="followPill"></button>
         <div class="bus-card" id="busCard"></div>
         <div class="side-stack" id="sideStack">
             <div class="push-panel hidden" id="pushPanel">
@@ -589,9 +696,9 @@
                     <button class="push-option" data-bus="all">すべての号車</button>
                 </div>
             </div>
-            <div class="log-panel hidden" id="logPanel">
-                <div class="log-panel-title">📋 今日の連絡</div>
-                <div id="logItems"></div>
+            <div class="push-panel hidden" id="pwaPanel">
+                <button class="push-toggle" id="installButton" style="display: none;">📲 アプリとして入れる</button>
+                <div class="push-note" id="iosInstallNote" style="display: none;">📱 iPhoneの方: Safariの共有ボタン→「ホーム画面に追加」でアプリとして使えます（通知の受信にも必要です）</div>
             </div>
         </div>
     </div>
@@ -644,6 +751,35 @@
         });
 
         document.getElementById('drawerBackdrop').addEventListener('click', () => setDrawer(false));
+
+        // ========================================
+        // PWAインストール導線（設定メニュー内）
+        // ========================================
+        let deferredInstallPrompt = null;
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+            || window.navigator.standalone === true;
+        const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredInstallPrompt = e;
+            if (!isStandalone) {
+                document.getElementById('installButton').style.display = 'block';
+                document.getElementById('pwaPanel').classList.remove('hidden');
+            }
+        });
+
+        if (!isStandalone && isIOS) {
+            document.getElementById('iosInstallNote').style.display = 'block';
+            document.getElementById('pwaPanel').classList.remove('hidden');
+        }
+
+        document.getElementById('installButton').addEventListener('click', () => {
+            if (!deferredInstallPrompt) return;
+            deferredInstallPrompt.prompt();
+            deferredInstallPrompt = null;
+            document.getElementById('installButton').style.display = 'none';
+        });
     </script>
 
     <!-- Firebase SDKとメインロジック -->
@@ -680,18 +816,35 @@
         let latestBusData = {};
         let initialCentered = false;
 
+        // 号車名に「テスト」を含むバスは保護者には見せない（?test=1 付きURLでのみ表示。
+        // 開発・動作確認のとき保護者に通知や表示が飛ばないようにするための仕組み）
+        const showTestBuses = new URLSearchParams(location.search).get('test') === '1';
+        function isHiddenTestBus(busId, bus) {
+            if (showTestBuses) return false;
+            const name = String((bus && bus.busNumber) || busId);
+            return name.includes('テスト') || String(busId).includes('テスト');
+        }
+
         window.__onMapReady = () => {
             updateMapMarkers(latestBusData);
             centerOnActiveBusOnce();
             map.addListener('click', () => closeBusCard());
+            map.addListener('dragstart', () => {
+                if (followBusId) {
+                    followBusId = null;
+                    if (openBusCardId) renderBusCard(openBusCardId);
+                    updateFollowPill();
+                }
+            });
         };
 
         // ページを開いたとき、運行中のバスがいれば最初の1回だけそこへ寄せる
         function centerOnActiveBusOnce() {
             if (initialCentered || !map) return;
-            const active = Object.values(latestBusData).find((b) => b && b.isActive && b.location);
-            if (active) {
-                map.setCenter({ lat: active.location.latitude, lng: active.location.longitude });
+            const entry = Object.entries(latestBusData)
+                .find(([busId, b]) => b && b.isActive && b.location && !isHiddenTestBus(busId, b));
+            if (entry) {
+                map.setCenter({ lat: entry[1].location.latitude, lng: entry[1].location.longitude });
                 initialCentered = true;
             }
         }
@@ -702,21 +855,35 @@
             }[ch]));
         }
 
+        // 連絡の種別: 出発・到着はお知らせ（緑）、それ以外（渋滞・遅れ）は遅延（赤）
+        function noticeKind(message) {
+            const m = String(message);
+            return (m.includes('出発') || m.includes('到着')) ? 'info' : 'delay';
+        }
+
+        function hasDelayNotice(bus) {
+            return !!(bus && bus.notice && bus.notice.message && noticeKind(bus.notice.message) === 'delay');
+        }
+
+        // 状態: 灰=停止中 / 黄=通信障害 / 赤=遅延中 / 緑=運行中
         function getBusStatus(bus) {
             if (!bus || !bus.isActive) {
                 return { className: 'status-stopped', label: '停止中' };
             }
-            const last = bus.lastUpdate || 0;
-            if (Date.now() - last > STALE_MS) {
-                return { className: 'status-stale', label: '通信途絶?' };
+            if (Date.now() - (bus.lastUpdate || 0) > STALE_MS) {
+                return { className: 'status-stale', label: '通信障害' };
+            }
+            if (hasDelayNotice(bus)) {
+                return { className: 'status-delay', label: '遅延中' };
             }
             return { className: 'status-active', label: '運行中' };
         }
 
         function markerIconFor(statusClass) {
             const colors = {
-                'status-active': '#ff6b9d',
+                'status-active': '#34c759',
                 'status-stale': '#ff9500',
+                'status-delay': '#ff3b30',
                 'status-stopped': '#86868b'
             };
             return {
@@ -731,7 +898,7 @@
 
         function renderBusStrip(data) {
             const stripEl = document.getElementById('busStrip');
-            const entries = Object.entries(data);
+            const entries = Object.entries(data).filter(([busId, bus]) => !isHiddenTestBus(busId, bus));
 
             if (entries.length === 0) {
                 stripEl.classList.add('hidden');
@@ -748,14 +915,20 @@
             stripEl.classList.remove('hidden');
         }
 
+        // バスを画面中央にパンする（カードは小さいので中央でも隠れない）
+        function panToBusWithOffset(marker) {
+            if (!map) return;
+            map.panTo(marker.getPosition());
+        }
+
         document.getElementById('busStrip').addEventListener('click', (event) => {
             const chip = event.target.closest('.bus-strip-chip');
             if (!chip) return;
             const busId = chip.dataset.busId;
             const marker = busMarkers[busId];
             if (marker && map) {
-                map.panTo(marker.getPosition());
                 map.setZoom(16);
+                panToBusWithOffset(marker);
             }
             openBusCard(busId);
         });
@@ -787,9 +960,19 @@
 
         function refreshPushStatus() {
             const saved = getSavedSubscription();
-            pushToggleButton.textContent = (saved && saved.token)
-                ? `🔕 通知オン: ${busLabelFor(saved.busId)}（タップで解除）`
-                : '🔔 遅延通知を受け取る';
+            pushToggleButton.innerHTML = (saved && saved.token)
+                ? `🔕 ${busLabelFor(saved.busId)}の通知オン<small>タップで解除</small>`
+                : '🔔 通知を受け取る';
+        }
+
+        // Service Workerはページ読み込み時に登録を始めておく
+        // （通知オンのタップ時に登録から始めるとラグが大きいため）
+        let swRegistrationPromise = null;
+        function ensureServiceWorker() {
+            if (!swRegistrationPromise) {
+                swRegistrationPromise = navigator.serviceWorker.register('./firebase-messaging-sw.js');
+            }
+            return swRegistrationPromise;
         }
 
         async function setupPushUI() {
@@ -798,12 +981,13 @@
             if (!('serviceWorker' in navigator) || !('Notification' in window)
                 || !(await isMessagingSupported().catch(() => false))) {
                 // iPhoneのブラウザ表示など、通知非対応の環境では案内だけ出す
-                pushPanel.innerHTML = '<div class="push-note">📱 iPhoneの方は、共有メニューから「ホーム画面に追加」して開くと遅延通知を設定できます</div>';
+                pushPanel.innerHTML = '<div class="push-note">📱 iPhoneの方は、共有メニューから「ホーム画面に追加」して開くと通知を設定できます</div>';
                 pushPanel.classList.remove('hidden');
                 return;
             }
 
             pushSupported = true;
+            ensureServiceWorker().catch((error) => console.warn('SW事前登録に失敗:', error));
             pushPanel.classList.remove('hidden');
             refreshPushStatus();
 
@@ -823,14 +1007,17 @@
 
         async function subscribePush(busId) {
             pushOptions.classList.add('hidden');
+            pushToggleButton.textContent = '⏳ 通知を設定しています...';
             try {
                 const permission = await Notification.requestPermission();
                 if (permission !== 'granted') {
                     showNotification('通知が許可されませんでした。端末の設定を確認してください');
+                    refreshPushStatus();
                     return;
                 }
                 // GitHub Pages等ではオリジン直下にSWを置けないため明示登録して渡す
-                const registration = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
+                // （登録自体はページ読み込み時に開始済み。ここでは完了を待つだけ）
+                const registration = await ensureServiceWorker();
                 const messaging = getMessaging(app);
                 const token = await getToken(messaging, {
                     vapidKey: VAPID_KEY,
@@ -842,10 +1029,11 @@
                 });
                 localStorage.setItem(PUSH_STORAGE_KEY, JSON.stringify({ token: token, busId: busId }));
                 refreshPushStatus();
-                showNotification(`${busLabelFor(busId)}の遅延通知を受け取ります`);
+                showNotification(`${busLabelFor(busId)}の通知を受け取ります`);
             } catch (error) {
                 console.error('通知の設定に失敗:', error);
                 showNotification('通知の設定に失敗しました');
+                refreshPushStatus();
             }
         }
 
@@ -855,7 +1043,7 @@
                 await deleteToken(getMessaging(app)).catch(() => {});
                 localStorage.removeItem(PUSH_STORAGE_KEY);
                 refreshPushStatus();
-                showNotification('遅延通知を解除しました');
+                showNotification('通知を解除しました');
             } catch (error) {
                 console.error('通知の解除に失敗:', error);
                 showNotification('通知の解除に失敗しました');
@@ -865,58 +1053,67 @@
         setupPushUI();
 
         // ========================================
-        // 運転手からの遅延連絡バナー
+        // 運転手からの連絡バナー（緑=出発到着 / 赤=遅延、OKで既読）
+        // ＋通信障害の自動バナー（黄、通信が戻れば自動で消える）
         // ========================================
+        const DISMISSED_KEY = 'dismissedNotices';
+
+        function getDismissedNotices() {
+            try {
+                return JSON.parse(localStorage.getItem(DISMISSED_KEY)) || [];
+            } catch (error) {
+                return [];
+            }
+        }
+
         function renderNotices(data) {
             const container = document.getElementById('noticeBanners');
-            container.innerHTML = Object.entries(data)
-                .filter(([busId, bus]) => bus && bus.isActive && bus.notice && bus.notice.message)
-                .map(([busId, bus]) => {
-                    const label = escapeHtml(bus.busNumber ?? busId);
-                    const time = new Date(bus.notice.timestamp || Date.now())
-                        .toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
-                    return `<div class="notice-banner">🚌 ${label}号車: ${escapeHtml(bus.notice.message)}（${time}）</div>`;
-                }).join('');
-        }
+            const dismissed = getDismissedNotices();
+            const banners = [];
 
-        // ========================================
-        // 今日の連絡履歴（全号車分をまとめて新しい順に表示）
-        // ========================================
-        function renderNoticeLog(data) {
-            const todayStart = new Date();
-            todayStart.setHours(0, 0, 0, 0);
-
-            const entries = [];
             Object.entries(data).forEach(([busId, bus]) => {
-                if (!bus || !bus.noticeLog) return;
+                if (!bus || isHiddenTestBus(busId, bus)) return;
                 const label = escapeHtml(bus.busNumber ?? busId);
-                Object.values(bus.noticeLog).forEach((entry) => {
-                    if (entry && entry.timestamp >= todayStart.getTime()) {
-                        entries.push({ label: label, message: entry.message, timestamp: entry.timestamp });
+
+                // 運転手からの連絡（運行終了後もOKを押すまで表示され続ける）
+                if (bus.notice && bus.notice.message) {
+                    const key = `${busId}:${bus.notice.timestamp}`;
+                    if (!dismissed.includes(key)) {
+                        const kind = noticeKind(bus.notice.message);
+                        const icon = kind === 'info' ? '🚌' : '⚠️';
+                        banners.push(`<div class="notice-banner ${kind}">
+                            <span>${icon} ${label}号車: ${escapeHtml(bus.notice.message)}（${timeStr(bus.notice.timestamp || Date.now())}）</span>
+                            <button class="notice-ok" data-dismiss="${escapeHtml(key)}">OK</button>
+                        </div>`);
                     }
-                });
+                }
+
+                // 通信障害の警告（運行中なのに更新が止まっているバス）
+                if (bus.isActive && bus.lastUpdate && Date.now() - bus.lastUpdate > STALE_MS) {
+                    banners.push(`<div class="notice-banner stale">
+                        <span>⚠️ ${label}号車: 通信が途絶えています（最終更新 ${timeStr(bus.lastUpdate)}）</span>
+                    </div>`);
+                }
             });
 
-            const panel = document.getElementById('logPanel');
-            if (entries.length === 0) {
-                panel.classList.add('hidden');
-                return;
-            }
-
-            entries.sort((a, b) => b.timestamp - a.timestamp);
-            document.getElementById('logItems').innerHTML = entries.slice(0, 20).map((entry) => {
-                const time = new Date(entry.timestamp)
-                    .toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
-                return `<div class="log-item"><span class="log-time">${time}</span>${entry.label}号車: ${escapeHtml(entry.message)}</div>`;
-            }).join('');
-            panel.classList.remove('hidden');
+            container.innerHTML = banners.join('');
         }
+
+        document.getElementById('noticeBanners').addEventListener('click', (event) => {
+            const button = event.target.closest('.notice-ok');
+            if (!button) return;
+            const list = getDismissedNotices();
+            list.push(button.dataset.dismiss);
+            localStorage.setItem(DISMISSED_KEY, JSON.stringify(list.slice(-30)));
+            renderNotices(latestBusData);
+        });
 
         // ========================================
         // 号車詳細カード（チップ/マーカーのタップで表示）
         // 状態・最終更新・現在の連絡・今日の履歴・通知設定をまとめて見られる
         // ========================================
         let openBusCardId = null;
+        let followBusId = null;
 
         function timeStr(ts) {
             return new Date(ts).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
@@ -942,31 +1139,40 @@
                 html += `<div class="bus-card-notice">📢 ${escapeHtml(bus.notice.message)}（${timeStr(bus.notice.timestamp || Date.now())}）</div>`;
             }
 
-            const todayStart = new Date();
-            todayStart.setHours(0, 0, 0, 0);
-            const logs = Object.values(bus.noticeLog || {})
-                .filter((entry) => entry && entry.timestamp >= todayStart.getTime())
-                .sort((a, b) => b.timestamp - a.timestamp)
-                .slice(0, 5);
-            if (logs.length > 0) {
-                html += `<div class="bus-card-row">今日の連絡</div><div class="bus-card-log">`
-                    + logs.map((entry) =>
-                        `<div class="log-item"><span class="log-time">${timeStr(entry.timestamp)}</span>${escapeHtml(entry.message)}</div>`
-                    ).join('')
-                    + `</div>`;
-            }
+            const following = followBusId === busId;
+            html += `<button class="bus-card-push ${following ? '' : 'subscribed'}" data-action="follow">${following ? '🎯 追跡中（タップで解除）' : '🎯 このバスを追跡'}</button>`;
 
             if (pushSupported) {
                 const saved = getSavedSubscription();
                 if (saved && saved.token && saved.busId === busId) {
                     html += `<button class="bus-card-push subscribed" data-action="unsubscribe">🔕 この号車の通知をオフにする</button>`;
                 } else {
-                    html += `<button class="bus-card-push" data-action="subscribe">🔔 この号車の遅延通知を受け取る</button>`;
+                    html += `<button class="bus-card-push" data-action="subscribe">🔔 この号車の通知を受け取る</button>`;
                 }
             }
 
             document.getElementById('busCard').innerHTML = html;
         }
+
+        // 追跡はカードを閉じても・別のバスのカードを開いても続く。
+        // 解除は追跡中ピル・「追跡中」ボタンの再タップ・地図のドラッグのみ
+        function updateFollowPill() {
+            const pill = document.getElementById('followPill');
+            const bus = followBusId ? latestBusData[followBusId] : null;
+            if (!bus) {
+                pill.classList.add('hidden');
+                return;
+            }
+            const label = escapeHtml(bus.busNumber ?? followBusId);
+            pill.innerHTML = `<span class="follow-dot"></span>${label}号車を追跡中<span class="follow-x">✕</span>`;
+            pill.classList.remove('hidden');
+        }
+
+        document.getElementById('followPill').addEventListener('click', () => {
+            followBusId = null;
+            updateFollowPill();
+            if (openBusCardId) renderBusCard(openBusCardId);
+        });
 
         function openBusCard(busId) {
             openBusCardId = busId;
@@ -988,7 +1194,20 @@
                 closeBusCard();
                 return;
             }
+            if (action === 'follow' && openBusCardId) {
+                followBusId = followBusId === openBusCardId ? null : openBusCardId;
+                if (followBusId) {
+                    const marker = busMarkers[followBusId];
+                    if (marker) panToBusWithOffset(marker);
+                    closeBusCard(); // 追跡を始めたらカードを閉じて地図を見せる
+                } else {
+                    renderBusCard(openBusCardId);
+                }
+                updateFollowPill();
+                return;
+            }
             if (action === 'subscribe' && openBusCardId) {
+                target.textContent = '⏳ 通知を設定しています...';
                 await subscribePush(openBusCardId);
                 if (openBusCardId) renderBusCard(openBusCardId);
                 return;
@@ -998,6 +1217,69 @@
                 if (saved) await unsubscribePush(saved);
                 if (openBusCardId) renderBusCard(openBusCardId);
             }
+        });
+
+        // ========================================
+        // 自分の現在地表示（📍ボタンでオン/オフ）
+        // ========================================
+        let myLocationMarker = null;
+        let myLocationWatchId = null;
+
+        document.getElementById('locateButton').addEventListener('click', () => {
+            const button = document.getElementById('locateButton');
+
+            if (myLocationWatchId !== null) {
+                navigator.geolocation.clearWatch(myLocationWatchId);
+                myLocationWatchId = null;
+                if (myLocationMarker) {
+                    myLocationMarker.setMap(null);
+                    myLocationMarker = null;
+                }
+                button.classList.remove('on');
+                return;
+            }
+
+            if (!navigator.geolocation || !map) {
+                showNotification('現在地を取得できません');
+                return;
+            }
+
+            let firstFix = true;
+            myLocationWatchId = navigator.geolocation.watchPosition((position) => {
+                const pos = { lat: position.coords.latitude, lng: position.coords.longitude };
+                if (!myLocationMarker) {
+                    myLocationMarker = new google.maps.Marker({
+                        map: map,
+                        position: pos,
+                        icon: {
+                            path: google.maps.SymbolPath.CIRCLE,
+                            scale: 8,
+                            fillColor: '#1a73e8',
+                            fillOpacity: 1,
+                            strokeColor: 'white',
+                            strokeWeight: 3,
+                        },
+                        title: '現在地',
+                        zIndex: 999,
+                    });
+                } else {
+                    myLocationMarker.setPosition(pos);
+                }
+                if (firstFix) {
+                    map.panTo(pos);
+                    firstFix = false;
+                }
+            }, (error) => {
+                console.error('現在地の取得に失敗:', error);
+                showNotification('現在地を取得できませんでした。位置情報の許可を確認してください');
+                if (myLocationWatchId !== null) {
+                    navigator.geolocation.clearWatch(myLocationWatchId);
+                    myLocationWatchId = null;
+                }
+                button.classList.remove('on');
+            }, { enableHighAccuracy: true });
+
+            button.classList.add('on');
         });
 
         function subscribeBusPath(busId, sessionId) {
@@ -1036,6 +1318,7 @@
             const seenIds = new Set();
 
             Object.entries(data).forEach(([busId, bus]) => {
+                if (isHiddenTestBus(busId, bus)) return;
                 seenIds.add(busId);
                 if (!bus.location) return;
 
@@ -1045,10 +1328,16 @@
                 let marker = busMarkers[busId];
                 if (!marker) {
                     marker = new google.maps.Marker({ map: map });
-                    marker.addListener('click', () => openBusCard(busId));
+                    marker.addListener('click', () => {
+                        panToBusWithOffset(marker);
+                        openBusCard(busId);
+                    });
                     busMarkers[busId] = marker;
                 }
                 marker.setPosition(pos);
+                if (busId === followBusId && map) {
+                    panToBusWithOffset(marker);
+                }
                 marker.setIcon(markerIconFor(status.className));
                 marker.setLabel({
                     text: String(bus.busNumber ?? ''),
@@ -1087,7 +1376,7 @@
                 renderBusStrip(latestBusData);
                 updateMapMarkers(latestBusData);
                 renderNotices(latestBusData);
-                renderNoticeLog(latestBusData);
+                updateFollowPill();
                 if (openBusCardId) renderBusCard(openBusCardId);
                 centerOnActiveBusOnce();
                 document.getElementById('loading').classList.add('hidden');
@@ -1098,10 +1387,11 @@
             });
         }
 
-        // ステータス表示の定期更新（通信途絶の判定を経過時間に応じて更新する）
+        // ステータス表示の定期更新（通信障害の判定・黄バナーを経過時間に応じて更新する）
         setInterval(() => {
             renderBusStrip(latestBusData);
             updateMapMarkers(latestBusData);
+            renderNotices(latestBusData);
         }, 15000);
 
         onAuthStateChanged(auth, (user) => {

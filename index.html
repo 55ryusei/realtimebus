@@ -18,40 +18,40 @@
             background: #f5f5f7;
             color: #1d1d1f;
             height: 100vh;
+            height: 100dvh;
             display: flex;
             flex-direction: column;
             overflow: hidden;
         }
 
-        .header {
-            background: linear-gradient(135deg, #ff8fb3 0%, #ff5c93 100%);
-            color: #ffffff;
-            padding: 10px 16px;
+        /* 左上のフローティングロゴ（旧ヘッダーの代わり） */
+        .logo-chip {
+            position: absolute;
+            top: calc(14px + env(safe-area-inset-top));
+            left: 14px;
+            z-index: 1200;
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 4px 24px rgba(255, 107, 157, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35);
-            position: relative;
-            z-index: 1100;
-        }
-
-        .header-content {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex: 1;
+            gap: 8px;
+            padding: 5px 14px 5px 5px;
+            border-radius: 9999px;
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0.48) 100%);
+            backdrop-filter: blur(24px) saturate(200%);
+            -webkit-backdrop-filter: blur(24px) saturate(200%);
+            border: 1px solid rgba(255, 255, 255, 0.65);
+            box-shadow: 0 8px 24px rgba(255, 107, 157, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.9);
         }
 
         .logo {
-            width: 36px;
-            height: 36px;
+            width: 34px;
+            height: 34px;
             background: white;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             overflow: hidden;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+            flex: none;
         }
 
         .logo img {
@@ -61,24 +61,11 @@
             border-radius: 50%;
         }
 
-        .header-text {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-        }
-
-        .header h1 {
-            font-size: 15px;
-            margin: 0;
-            font-weight: 600;
-            letter-spacing: -0.2px;
-            line-height: 1.2;
-        }
-
-        .header .status {
+        .logo-chip .status {
             font-size: 11px;
-            color: rgba(255, 255, 255, 0.85);
-            margin-top: 1px;
+            font-weight: 600;
+            color: #7a7a7a;
+            white-space: nowrap;
         }
 
         .map-container {
@@ -106,7 +93,7 @@
         .info-dock {
             position: absolute;
             left: 15px;
-            bottom: 24px;
+            bottom: calc(20px + env(safe-area-inset-bottom));
             z-index: 1000;
         }
 
@@ -195,9 +182,48 @@
             background: rgba(255, 240, 245, 0.9);
         }
 
-        .notice-option.clear {
-            color: #7a7a7a;
-            font-weight: 400;
+        /* 送信中の連絡ブロック（モーダル内・取り消しを目立たせる） */
+        .notice-current {
+            border: 1px solid rgba(255, 149, 0, 0.4);
+            background: linear-gradient(135deg, rgba(255, 159, 10, 0.14) 0%, rgba(255, 120, 0, 0.1) 100%);
+            border-radius: 16px;
+            padding: 12px;
+            margin-bottom: 14px;
+        }
+
+        .notice-current.hidden {
+            display: none;
+        }
+
+        .notice-current-text {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .notice-cancel-button {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(224, 53, 43, 0.55);
+            border-radius: 9999px;
+            background: rgba(255, 255, 255, 0.85);
+            color: #e0352b;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .notice-cancel-button:active {
+            transform: scale(0.97);
+        }
+
+        /* 連絡送信中は地図上のボタンをオレンジで光らせる */
+        .notice-button.active {
+            background: linear-gradient(145deg, rgba(255, 179, 64, 0.95) 0%, rgba(255, 140, 0, 0.95) 100%);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: #ffffff;
+            box-shadow: 0 8px 24px rgba(255, 140, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.5);
         }
 
         .info-panel {
@@ -492,8 +518,8 @@
         }
 
         .bus-badge {
-            background: linear-gradient(145deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.12) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.55);
+            background: linear-gradient(145deg, #ff8fb3 0%, #ff4d88 100%);
+            border: 1px solid rgba(255, 255, 255, 0.45);
             box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
             color: white;
             padding: 4px 12px;
@@ -505,22 +531,17 @@
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="header-content">
+    <div class="map-container">
+        <div id="map"></div>
+
+        <div class="logo-chip">
             <div class="logo">
                 <img src="logo.png" alt="ロゴ" onerror="this.parentElement.innerHTML='🚐'">
             </div>
-            <div class="header-text">
-                <h1>幼稚園バス管理</h1>
-                <div class="status" id="statusText">認証中...</div>
-            </div>
+            <span class="status" id="statusText">認証中...</span>
+            <span id="busBadge"></span>
         </div>
-        <div id="busBadge"></div>
-    </div>
 
-    <div class="map-container">
-        <div id="map"></div>
-        
         <div class="controls">
             <button id="startButton" class="start-button stopped">
                 <div class="icon">▶️</div>
@@ -578,8 +599,11 @@
                     <span style="font-size: 30px;">🚌</span>
                     <span>6号車</span>
                 </button>
+                <button class="bus-button" data-bus="テスト" id="testBusButton" style="display: none;">
+                    <span style="font-size: 30px;">🧪</span>
+                    <span>テスト</span>
+                </button>
             </div>
-            <input type="text" class="custom-bus-input" id="customBusInput" placeholder="その他の号車名を入力 (例: 5号車)">
             <input type="password" class="custom-bus-input" id="pinInput" placeholder="運行開始の暗証番号" inputmode="numeric" autocomplete="off">
             <div class="modal-buttons">
                 <button class="modal-button cancel" id="cancelButton">キャンセル</button>
@@ -592,6 +616,10 @@
     <div class="modal hidden" id="noticeModal">
         <div class="modal-content">
             <div class="modal-title">📢 保護者への連絡</div>
+            <div class="notice-current hidden" id="currentNoticeBlock">
+                <div class="notice-current-text" id="currentNoticeText"></div>
+                <button class="notice-cancel-button" id="cancelNoticeButton">🚫 この連絡を取り消す</button>
+            </div>
             <div class="notice-options">
                 <button class="notice-option" data-message="園を出発しました">園を出発しました</button>
                 <button class="notice-option" data-message="園に到着しました">園に到着しました</button>
@@ -599,7 +627,6 @@
                 <button class="notice-option" data-message="約5分遅れています">約5分遅れています</button>
                 <button class="notice-option" data-message="約10分遅れています">約10分遅れています</button>
                 <button class="notice-option" data-message="15分以上遅れています">15分以上遅れています</button>
-                <button class="notice-option clear" data-message="">連絡を取り消す</button>
             </div>
             <div class="modal-buttons">
                 <button class="modal-button cancel" id="noticeCancelButton">キャンセル</button>
@@ -844,29 +871,20 @@
         // 号車選択モーダル
         // ========================================
         const busButtons = document.querySelectorAll('.bus-button');
-        const customBusInput = document.getElementById('customBusInput');
 
         busButtons.forEach(button => {
             button.addEventListener('click', function() {
                 busButtons.forEach(btn => btn.classList.remove('selected'));
                 this.classList.add('selected');
                 selectedBusNumber = this.dataset.bus;
-                customBusInput.value = '';
             });
         });
 
-        customBusInput.addEventListener('input', function() {
-            // 記号を除去し長さを制限（他号車のなりすまし/表示崩れ対策）
-            const sanitized = this.value.replace(/[<>&"'`]/g, '').slice(0, 10);
-            if (sanitized !== this.value) this.value = sanitized;
-
-            if (this.value) {
-                busButtons.forEach(btn => btn.classList.remove('selected'));
-                selectedBusNumber = this.value;
-            } else {
-                selectedBusNumber = null;
-            }
-        });
+        // ?test=1 付きで開いたときだけテスト号車ボタンを表示する
+        // （号車名「テスト」は保護者に表示されず、プッシュ通知も送られない）
+        if (new URLSearchParams(location.search).get('test') === '1') {
+            document.getElementById('testBusButton').style.display = 'flex';
+        }
 
         // ========================================
         // 運行開始/停止ボタン
@@ -892,7 +910,6 @@
             document.getElementById('busSelectionModal').classList.remove('hidden');
             selectedBusNumber = null;
             busButtons.forEach(btn => btn.classList.remove('selected'));
-            customBusInput.value = '';
             document.getElementById('pinInput').value = '';
         }
 
@@ -989,7 +1006,8 @@
             document.getElementById('statusText').textContent = '運行中';
             document.getElementById('busBadge').innerHTML = `<span class="bus-badge">${busNumber}号車</span>`;
             document.getElementById('noticeButton').style.display = 'block';
-            document.getElementById('noticeStatus').textContent = 'なし';
+            currentNoticeMessage = null;
+            updateNoticeUI();
 
             // マーカーに号車番号を表示
             marker.setLabel({
@@ -1015,12 +1033,23 @@
             durationInterval = setInterval(updateDuration, 1000);
 
             showNotification(`${busNumber}号車の運行を開始しました`, 'success');
+
+            // 出発の連絡は自動送信せず、運転手（添乗の先生）に確認してから送る
+            if (confirm('保護者に「園を出発しました」と連絡しますか？')) {
+                await sendNotice('園を出発しました');
+            }
         }
 
         // ========================================
         // 追跡停止
         // ========================================
         async function stopTracking() {
+            // 到着の連絡を送るか確認（停止処理でnoticeがクリアされる前に送る。
+            // プッシュ送信はnotice書き込み時点で発火するため、直後のクリアと競合しない）
+            if (confirm('保護者に「園に到着しました」と連絡しますか？')) {
+                await sendNotice('園に到着しました');
+            }
+
             isTracking = false;
 
             if (watchId !== null) {
@@ -1038,10 +1067,11 @@
                 const busRef = ref(window.database, `buses/${currentBusId}`);
                 try {
                     await onDisconnect(busRef).cancel();
+                    // notice はここではクリアしない（到着連絡を運行終了後も保護者に
+                    // 見せるため。次回の運行開始トランザクションでクリアされる）
                     await update(busRef, {
                         isActive: false,
-                        endTime: Date.now(),
-                        notice: null
+                        endTime: Date.now()
                     });
                 } catch (error) {
                     console.error('運行終了の記録に失敗:', error);
@@ -1060,7 +1090,8 @@
             document.getElementById('statusText').textContent = '待機中';
             document.getElementById('busBadge').innerHTML = '';
             document.getElementById('noticeButton').style.display = 'none';
-            document.getElementById('noticeStatus').textContent = 'なし';
+            currentNoticeMessage = null;
+            updateNoticeUI();
 
             // マーカーのラベルをクリア
             marker.setLabel(null);
@@ -1185,10 +1216,54 @@
         });
 
         // ========================================
-        // 遅延連絡（運行中のみ。プリセットをタップで即送信）
+        // 保護者への連絡（運行中のみ。プリセットをタップで即送信）
         // ========================================
+        let currentNoticeMessage = null;
+
+        function updateNoticeUI() {
+            const button = document.getElementById('noticeButton');
+            button.textContent = currentNoticeMessage ? '📢 連絡中' : '📢 連絡';
+            button.classList.toggle('active', !!currentNoticeMessage);
+            document.getElementById('noticeStatus').textContent = currentNoticeMessage || 'なし';
+        }
+
+        async function sendNotice(message) {
+            if (!window.database || !currentBusId) return;
+            try {
+                await update(ref(window.database, `buses/${currentBusId}`), {
+                    notice: { message: message, timestamp: Date.now() }
+                });
+                currentNoticeMessage = message;
+                updateNoticeUI();
+                showNotification(`保護者へ連絡しました: ${message}`, 'success');
+            } catch (error) {
+                console.error('連絡の送信に失敗:', error);
+                showNotification('連絡の送信に失敗しました（通信環境を確認してください）', 'error');
+            }
+        }
+
+        async function cancelNotice() {
+            if (!window.database || !currentBusId) return;
+            try {
+                await update(ref(window.database, `buses/${currentBusId}`), { notice: null });
+                currentNoticeMessage = null;
+                updateNoticeUI();
+                showNotification('連絡を取り消しました', 'success');
+            } catch (error) {
+                console.error('連絡の取り消しに失敗:', error);
+                showNotification('取り消しに失敗しました（通信環境を確認してください）', 'error');
+            }
+        }
+
         document.getElementById('noticeButton').addEventListener('click', function() {
             if (!isTracking) return;
+            const block = document.getElementById('currentNoticeBlock');
+            if (currentNoticeMessage) {
+                document.getElementById('currentNoticeText').textContent = `📤 送信中: ${currentNoticeMessage}`;
+                block.classList.remove('hidden');
+            } else {
+                block.classList.add('hidden');
+            }
             document.getElementById('noticeModal').classList.remove('hidden');
         });
 
@@ -1196,34 +1271,15 @@
             document.getElementById('noticeModal').classList.add('hidden');
         });
 
+        document.getElementById('cancelNoticeButton').addEventListener('click', async function() {
+            document.getElementById('noticeModal').classList.add('hidden');
+            await cancelNotice();
+        });
+
         document.querySelectorAll('.notice-option').forEach((button) => {
             button.addEventListener('click', async function() {
                 document.getElementById('noticeModal').classList.add('hidden');
-                if (!window.database || !currentBusId) return;
-
-                const message = this.dataset.message;
-                const busRef = ref(window.database, `buses/${currentBusId}`);
-                try {
-                    if (message) {
-                        await update(busRef, {
-                            notice: { message: message, timestamp: Date.now() }
-                        });
-                        // 当日の連絡履歴（保護者ページの「今日の連絡」欄用）
-                        await push(ref(window.database, `buses/${currentBusId}/noticeLog`), {
-                            message: message,
-                            timestamp: Date.now()
-                        });
-                        document.getElementById('noticeStatus').textContent = message;
-                        showNotification(`保護者へ連絡しました: ${message}`, 'success');
-                    } else {
-                        await update(busRef, { notice: null });
-                        document.getElementById('noticeStatus').textContent = 'なし';
-                        showNotification('遅れの連絡を取り消しました', 'success');
-                    }
-                } catch (error) {
-                    console.error('遅延連絡の送信に失敗:', error);
-                    showNotification('連絡の送信に失敗しました（通信環境を確認してください）', 'error');
-                }
+                await sendNotice(this.dataset.message);
             });
         });
 
