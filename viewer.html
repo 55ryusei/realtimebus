@@ -64,7 +64,7 @@
             white-space: nowrap;
         }
 
-        /* 右上のフローティング設定ボタン */
+        /* 右上のフローティング設定ボタン（ピンク＋白アイコンで地図に埋もれないように） */
         .settings-button {
             position: absolute;
             top: calc(14px + env(safe-area-inset-top));
@@ -73,13 +73,10 @@
             width: 44px;
             height: 44px;
             border-radius: 50%;
-            border: 1px solid rgba(255, 255, 255, 0.65);
-            background: linear-gradient(160deg, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0.48) 100%);
-            backdrop-filter: blur(24px) saturate(200%);
-            -webkit-backdrop-filter: blur(24px) saturate(200%);
-            box-shadow: 0 8px 24px rgba(255, 107, 157, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.9);
-            color: #1d1d1f;
-            font-size: 19px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            background: linear-gradient(145deg, #ff8fb3 0%, #ff4d88 100%);
+            box-shadow: 0 8px 20px rgba(255, 107, 157, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+            color: #ffffff;
             line-height: 1;
             cursor: pointer;
             transition: transform 0.2s;
@@ -87,6 +84,27 @@
 
         .settings-button:active {
             transform: scale(0.93);
+        }
+
+        /* SVGアイコン共通 */
+        .icon-svg {
+            width: 20px;
+            height: 20px;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .btn-svg {
+            width: 16px;
+            height: 16px;
+            flex: none;
+        }
+
+        .settings-button,
+        .locate-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .drawer-backdrop {
@@ -191,6 +209,7 @@
             -webkit-backdrop-filter: blur(24px) saturate(200%);
             border: 1px solid rgba(255, 255, 255, 0.65);
             box-shadow: 0 8px 32px rgba(255, 107, 157, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            width: max-content;
             max-width: 94vw;
         }
 
@@ -414,6 +433,10 @@
             width: 100%;
             margin-top: 10px;
             padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
             border: 1px solid rgba(255, 255, 255, 0.45);
             border-radius: 9999px;
             background: linear-gradient(145deg, #ff8fb3 0%, #ff4d88 100%);
@@ -436,21 +459,19 @@
             color: #1d1d1f;
         }
 
-        /* 現在地ボタン（左下） */
+        /* 現在地ボタン（左下・運行バーの左上あたり） */
         .locate-button {
             position: absolute;
             left: 14px;
-            bottom: calc(84px + env(safe-area-inset-bottom));
-            z-index: 1000;
+            bottom: calc(88px + env(safe-area-inset-bottom));
+            z-index: 1200;
             width: 44px;
             height: 44px;
             border-radius: 50%;
-            border: 1px solid rgba(255, 255, 255, 0.65);
-            background: linear-gradient(160deg, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0.48) 100%);
-            backdrop-filter: blur(24px) saturate(200%);
-            -webkit-backdrop-filter: blur(24px) saturate(200%);
-            box-shadow: 0 8px 24px rgba(255, 107, 157, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.9);
-            font-size: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            background: linear-gradient(145deg, #ff8fb3 0%, #ff4d88 100%);
+            box-shadow: 0 8px 20px rgba(255, 107, 157, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+            color: #ffffff;
             line-height: 1;
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
@@ -460,9 +481,12 @@
             transform: scale(0.93);
         }
 
+        /* 現在地オン中は白背景＋ピンクアイコンに反転してわかりやすく */
         .locate-button.on {
+            background: #ffffff;
+            color: #ff4d88;
             border-color: rgba(255, 107, 157, 0.7);
-            box-shadow: 0 0 12px rgba(255, 107, 157, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 14px rgba(255, 107, 157, 0.6), inset 0 1px 0 rgba(255, 255, 255, 1);
         }
 
         .push-panel {
@@ -501,6 +525,13 @@
             font-weight: 400;
             opacity: 0.85;
             margin-top: 2px;
+        }
+
+        .push-toggle .row {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
         }
 
         .push-toggle:active {
@@ -624,18 +655,14 @@
 
         @media (max-width: 767px) {
             .bus-strip-chip {
-                padding: 8px 10px;
-                font-size: 12px;
-                gap: 5px;
-            }
-
-            .bus-strip {
+                padding: 10px 12px;
+                font-size: 14px;
                 gap: 6px;
             }
 
-            .status-dot {
-                width: 8px;
-                height: 8px;
+            .bus-strip {
+                gap: 7px;
+                max-width: 96vw;
             }
 
             .side-stack {
@@ -678,8 +705,12 @@
             <!-- 接続状態はJSが参照するため要素は残すが表示しない -->
             <span class="status" id="statusText" style="display: none;">認証中...</span>
         </div>
-        <button class="settings-button" id="menuButton" aria-label="設定">⚙️</button>
-        <button class="locate-button" id="locateButton" aria-label="現在地を表示">📍</button>
+        <button class="settings-button" id="menuButton" aria-label="設定">
+            <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+        <button class="locate-button" id="locateButton" aria-label="現在地を表示">
+            <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" x2="5" y1="12" y2="12"/><line x1="19" x2="22" y1="12" y2="12"/><line x1="12" x2="12" y1="2" y2="5"/><line x1="12" x2="12" y1="19" y2="22"/><circle cx="12" cy="12" r="7"/></svg>
+        </button>
         <div class="drawer-backdrop" id="drawerBackdrop"></div>
         <div class="bus-strip hidden" id="busStrip"></div>
         <button class="follow-pill hidden" id="followPill"></button>
@@ -697,8 +728,8 @@
                 </div>
             </div>
             <div class="push-panel hidden" id="pwaPanel">
-                <button class="push-toggle" id="installButton" style="display: none;">📲 アプリとして入れる</button>
-                <div class="push-note" id="iosInstallNote" style="display: none;">📱 iPhoneの方: Safariの共有ボタン→「ホーム画面に追加」でアプリとして使えます（通知の受信にも必要です）</div>
+                <button class="push-toggle" id="installButton" style="display: none;"><span class="row"><svg class="btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>アプリとして入れる</span></button>
+                <div class="push-note" id="iosInstallNote" style="display: none;">iPhoneの方: Safariの共有ボタン→「ホーム画面に追加」でアプリとして使えます（通知の受信にも必要です）</div>
             </div>
         </div>
     </div>
@@ -722,6 +753,8 @@
                 mapTypeControl: false,
                 streetViewControl: false,
                 fullscreenControl: false,
+                zoomControl: false,
+                cameraControl: false,
             });
 
             if (window.__onMapReady) {
@@ -942,6 +975,12 @@
         const PUSH_STORAGE_KEY = 'busPushSubscription';
         let pushSupported = false;
 
+        // 線画SVGアイコン（絵文字の代わり）
+        const SVG_ATTRS = 'class="btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
+        const ICON_BELL = `<svg ${SVG_ATTRS}><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>`;
+        const ICON_BELL_OFF = `<svg ${SVG_ATTRS}><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><line x1="2" x2="22" y1="2" y2="22"/></svg>`;
+        const ICON_TARGET = `<svg ${SVG_ATTRS}><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>`;
+
         const pushPanel = document.getElementById('pushPanel');
         const pushToggleButton = document.getElementById('pushToggleButton');
         const pushOptions = document.getElementById('pushOptions');
@@ -961,8 +1000,8 @@
         function refreshPushStatus() {
             const saved = getSavedSubscription();
             pushToggleButton.innerHTML = (saved && saved.token)
-                ? `🔕 ${busLabelFor(saved.busId)}の通知オン<small>タップで解除</small>`
-                : '🔔 通知を受け取る';
+                ? `<span class="row">${ICON_BELL_OFF}${busLabelFor(saved.busId)}の通知オン</span><small>タップで解除</small>`
+                : `<span class="row">${ICON_BELL}通知を受け取る</span>`;
         }
 
         // Service Workerはページ読み込み時に登録を始めておく
@@ -1007,7 +1046,7 @@
 
         async function subscribePush(busId) {
             pushOptions.classList.add('hidden');
-            pushToggleButton.textContent = '⏳ 通知を設定しています...';
+            pushToggleButton.textContent = '通知を設定しています...';
             try {
                 const permission = await Notification.requestPermission();
                 if (permission !== 'granted') {
@@ -1140,14 +1179,14 @@
             }
 
             const following = followBusId === busId;
-            html += `<button class="bus-card-push ${following ? '' : 'subscribed'}" data-action="follow">${following ? '🎯 追跡中（タップで解除）' : '🎯 このバスを追跡'}</button>`;
+            html += `<button class="bus-card-push ${following ? '' : 'subscribed'}" data-action="follow">${ICON_TARGET}${following ? '追跡中（タップで解除）' : 'このバスを追跡'}</button>`;
 
             if (pushSupported) {
                 const saved = getSavedSubscription();
                 if (saved && saved.token && saved.busId === busId) {
-                    html += `<button class="bus-card-push subscribed" data-action="unsubscribe">🔕 この号車の通知をオフにする</button>`;
+                    html += `<button class="bus-card-push subscribed" data-action="unsubscribe">${ICON_BELL_OFF}この号車の通知をオフにする</button>`;
                 } else {
-                    html += `<button class="bus-card-push" data-action="subscribe">🔔 この号車の通知を受け取る</button>`;
+                    html += `<button class="bus-card-push" data-action="subscribe">${ICON_BELL}この号車の通知を受け取る</button>`;
                 }
             }
 
@@ -1207,7 +1246,7 @@
                 return;
             }
             if (action === 'subscribe' && openBusCardId) {
-                target.textContent = '⏳ 通知を設定しています...';
+                target.textContent = '通知を設定しています...';
                 await subscribePush(openBusCardId);
                 if (openBusCardId) renderBusCard(openBusCardId);
                 return;

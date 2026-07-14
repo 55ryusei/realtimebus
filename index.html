@@ -132,9 +132,22 @@
             transform: scale(0.93);
         }
 
-        .start-button .icon {
-            font-size: 32px;
-            line-height: 1;
+        .start-icon {
+            width: 26px;
+            height: 26px;
+            display: block;
+        }
+
+        .bus-icon {
+            width: 30px;
+            height: 30px;
+            display: block;
+        }
+
+        .btn-svg {
+            width: 16px;
+            height: 16px;
+            flex: none;
         }
 
         .notice-button {
@@ -150,6 +163,9 @@
             box-shadow: 0 8px 24px rgba(255, 107, 157, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.9);
             cursor: pointer;
             transition: transform 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .notice-button:active {
@@ -544,11 +560,11 @@
 
         <div class="controls">
             <button id="startButton" class="start-button stopped">
-                <div class="icon">▶️</div>
+                <svg class="start-icon" viewBox="0 0 24 24" fill="currentColor"><polygon points="7 4 21 12 7 20 7 4"/></svg>
                 <div>運行開始</div>
             </button>
 
-            <button id="noticeButton" class="notice-button" style="display: none;">📢 連絡</button>
+            <button id="noticeButton" class="notice-button" style="display: none;"><svg class="btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>連絡</button>
         </div>
 
         <div class="info-dock">
@@ -581,26 +597,26 @@
     <!-- 号車選択モーダル -->
     <div class="modal hidden" id="busSelectionModal">
         <div class="modal-content">
-            <div class="modal-title">🚌 号車を選択</div>
+            <div class="modal-title">号車を選択</div>
             <div class="bus-selection">
                 <button class="bus-button" data-bus="1">
-                    <span style="font-size: 30px;">🚌</span>
+                    <svg class="bus-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6 2 7"/><path d="M10 6h4"/><path d="m22 7-2-1"/><rect width="16" height="16" x="4" y="3" rx="2"/><path d="M4 11h16"/><path d="M8 15h.01"/><path d="M16 15h.01"/><path d="M6 19v2"/><path d="M18 21v-2"/></svg>
                     <span>1号車</span>
                 </button>
                 <button class="bus-button" data-bus="2">
-                    <span style="font-size: 30px;">🚌</span>
+                    <svg class="bus-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6 2 7"/><path d="M10 6h4"/><path d="m22 7-2-1"/><rect width="16" height="16" x="4" y="3" rx="2"/><path d="M4 11h16"/><path d="M8 15h.01"/><path d="M16 15h.01"/><path d="M6 19v2"/><path d="M18 21v-2"/></svg>
                     <span>2号車</span>
                 </button>
                 <button class="bus-button" data-bus="3">
-                    <span style="font-size: 30px;">🚌</span>
+                    <svg class="bus-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6 2 7"/><path d="M10 6h4"/><path d="m22 7-2-1"/><rect width="16" height="16" x="4" y="3" rx="2"/><path d="M4 11h16"/><path d="M8 15h.01"/><path d="M16 15h.01"/><path d="M6 19v2"/><path d="M18 21v-2"/></svg>
                     <span>3号車</span>
                 </button>
                 <button class="bus-button" data-bus="6">
-                    <span style="font-size: 30px;">🚌</span>
+                    <svg class="bus-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6 2 7"/><path d="M10 6h4"/><path d="m22 7-2-1"/><rect width="16" height="16" x="4" y="3" rx="2"/><path d="M4 11h16"/><path d="M8 15h.01"/><path d="M16 15h.01"/><path d="M6 19v2"/><path d="M18 21v-2"/></svg>
                     <span>6号車</span>
                 </button>
                 <button class="bus-button" data-bus="テスト" id="testBusButton" style="display: none;">
-                    <span style="font-size: 30px;">🧪</span>
+                    <svg class="bus-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/><path d="M8.5 2h7"/><path d="M7 16h10"/></svg>
                     <span>テスト</span>
                 </button>
             </div>
@@ -615,7 +631,7 @@
     <!-- 保護者への連絡モーダル -->
     <div class="modal hidden" id="noticeModal">
         <div class="modal-content">
-            <div class="modal-title">📢 保護者への連絡</div>
+            <div class="modal-title">保護者への連絡</div>
             <div class="notice-current hidden" id="currentNoticeBlock">
                 <div class="notice-current-text" id="currentNoticeText"></div>
                 <button class="notice-cancel-button" id="cancelNoticeButton">🚫 この連絡を取り消す</button>
@@ -677,6 +693,8 @@
                 mapTypeControl: false,
                 streetViewControl: false,
                 fullscreenControl: false,
+                zoomControl: false,
+                cameraControl: false,
             });
 
             marker = new google.maps.Marker({
@@ -820,6 +838,11 @@
 
         // 運行開始の暗証番号。園で決めた番号に変更してください
         const OPERATOR_PIN = '0000';
+
+        // 線画SVGアイコン（絵文字の代わり）
+        const ICON_PLAY = '<svg class="start-icon" viewBox="0 0 24 24" fill="currentColor"><polygon points="7 4 21 12 7 20 7 4"/></svg>';
+        const ICON_STOP_SQ = '<svg class="start-icon" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>';
+        const ICON_MEGAPHONE = '<svg class="btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>';
 
         // isActive が残留していても、最終更新がこの時間より古ければ
         // 異常終了とみなして同じ号車での運行再開を許可する
@@ -1001,7 +1024,7 @@
             const button = document.getElementById('startButton');
             button.classList.remove('stopped');
             button.classList.add('running');
-            button.innerHTML = '<div class="icon">⏹️</div><div>運行終了</div>';
+            button.innerHTML = ICON_STOP_SQ + '<div>運行終了</div>';
 
             document.getElementById('statusText').textContent = '運行中';
             document.getElementById('busBadge').innerHTML = `<span class="bus-badge">${busNumber}号車</span>`;
@@ -1085,7 +1108,7 @@
             const button = document.getElementById('startButton');
             button.classList.remove('running');
             button.classList.add('stopped');
-            button.innerHTML = '<div class="icon">▶️</div><div>運行開始</div>';
+            button.innerHTML = ICON_PLAY + '<div>運行開始</div>';
 
             document.getElementById('statusText').textContent = '待機中';
             document.getElementById('busBadge').innerHTML = '';
@@ -1222,7 +1245,7 @@
 
         function updateNoticeUI() {
             const button = document.getElementById('noticeButton');
-            button.textContent = currentNoticeMessage ? '📢 連絡中' : '📢 連絡';
+            button.innerHTML = ICON_MEGAPHONE + (currentNoticeMessage ? '連絡中' : '連絡');
             button.classList.toggle('active', !!currentNoticeMessage);
             document.getElementById('noticeStatus').textContent = currentNoticeMessage || 'なし';
         }

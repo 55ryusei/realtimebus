@@ -67,7 +67,7 @@
             white-space: nowrap;
         }
 
-        /* 右上のフローティング設定ボタン（スマホのみ表示） */
+        /* 右上のフローティング設定ボタン（スマホのみ表示・ピンク＋白アイコン） */
         .settings-button {
             position: absolute;
             top: calc(14px + env(safe-area-inset-top));
@@ -76,20 +76,26 @@
             width: 44px;
             height: 44px;
             border-radius: 50%;
-            border: 1px solid rgba(255, 255, 255, 0.65);
-            background: linear-gradient(160deg, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0.48) 100%);
-            backdrop-filter: blur(24px) saturate(200%);
-            -webkit-backdrop-filter: blur(24px) saturate(200%);
-            box-shadow: 0 8px 24px rgba(255, 107, 157, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.9);
-            color: #1d1d1f;
-            font-size: 19px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            background: linear-gradient(145deg, #ff8fb3 0%, #ff4d88 100%);
+            box-shadow: 0 8px 20px rgba(255, 107, 157, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+            color: #ffffff;
             line-height: 1;
             cursor: pointer;
             transition: transform 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .settings-button:active {
             transform: scale(0.93);
+        }
+
+        .icon-svg {
+            width: 20px;
+            height: 20px;
+            display: block;
         }
 
         .drawer-backdrop {
@@ -405,7 +411,9 @@
             </div>
             <span class="status" id="statusText">認証中...</span>
         </div>
-        <button class="settings-button" id="menuButton" aria-label="設定">⚙️</button>
+        <button class="settings-button" id="menuButton" aria-label="設定">
+            <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
         <div class="drawer-backdrop" id="drawerBackdrop"></div>
         <div class="side-stack" id="sideStack">
             <div class="glass-panel">
@@ -446,6 +454,8 @@
                 mapTypeControl: false,
                 streetViewControl: false,
                 fullscreenControl: false,
+                zoomControl: false,
+                cameraControl: false,
             });
         }
 
