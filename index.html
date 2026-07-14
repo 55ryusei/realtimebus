@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#ff6b9d">
+    <link rel="apple-touch-icon" href="icon-driver-180.png">
     <link rel="manifest" href="manifest.json">
     <title>幼稚園バス管理 - 運行モード</title>
     <style>
@@ -87,6 +88,37 @@
             flex-direction: column;
             align-items: flex-end;
             gap: 10px;
+        }
+
+        /* アプリインストールボタン（上部中央・インストール可能なときだけ表示） */
+        .install-pill {
+            position: absolute;
+            top: calc(14px + env(safe-area-inset-top));
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1150;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 18px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 9999px;
+            background: linear-gradient(145deg, #ff8fb3 0%, #ff4d88 100%);
+            box-shadow: 0 8px 20px rgba(255, 107, 157, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .install-pill:active {
+            transform: translateX(-50%) scale(0.95);
+        }
+
+        .install-pill.hidden {
+            display: none;
         }
 
         /* 運行情報は左下に置き、右上は操作ボタンだけにする */
@@ -557,6 +589,11 @@
             <span class="status" id="statusText">認証中...</span>
             <span id="busBadge"></span>
         </div>
+
+        <button class="install-pill hidden" id="installButton">
+            <svg class="btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+            アプリとして入れる
+        </button>
 
         <div class="controls">
             <button id="startButton" class="start-button stopped">
@@ -1313,11 +1350,35 @@
             this.classList.toggle('collapsed');
         });
 
-        // PWAのインストールプロンプト
-        let deferredPrompt;
+        // ========================================
+        // PWAインストール導線（上部中央のボタン）
+        // ========================================
+        let deferredInstallPrompt = null;
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+            || window.navigator.standalone === true;
+        const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+        const installButton = document.getElementById('installButton');
+
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
-            deferredPrompt = e;
+            deferredInstallPrompt = e;
+            if (!isStandalone) {
+                installButton.classList.remove('hidden');
+            }
+        });
+
+        if (!isStandalone && isIOS) {
+            installButton.classList.remove('hidden');
+        }
+
+        installButton.addEventListener('click', () => {
+            if (deferredInstallPrompt) {
+                deferredInstallPrompt.prompt();
+                deferredInstallPrompt = null;
+                installButton.classList.add('hidden');
+            } else if (isIOS) {
+                alert('Safariの共有ボタン（□に↑のマーク）から「ホーム画面に追加」を選ぶと、アプリとして使えます');
+            }
         });
     </script>
 
